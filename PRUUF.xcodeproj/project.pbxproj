@@ -1,0 +1,793 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1000001201AAAAA /* PruufApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001101AAAAA /* PruufApp.swift */; };
+		A1000002201AAAAA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002101AAAAA /* AppDelegate.swift */; };
+		A1000003201AAAAA /* AdminConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000003101AAAAA /* AdminConfig.swift */; };
+		A1000004201AAAAA /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000004101AAAAA /* Config.swift */; };
+		A1000005201AAAAA /* SupabaseConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000005101AAAAA /* SupabaseConfig.swift */; };
+		A1000006201AAAAA /* AuditLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000006101AAAAA /* AuditLog.swift */; };
+		A1000007201AAAAA /* Break.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000007101AAAAA /* Break.swift */; };
+		A1000008201AAAAA /* Connection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000008101AAAAA /* Connection.swift */; };
+		A1000009201AAAAA /* Notification.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000009101AAAAA /* Notification.swift */; };
+		A1000010201AAAAA /* PaymentTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000010101AAAAA /* PaymentTransaction.swift */; };
+		A1000011201AAAAA /* Ping.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000011101AAAAA /* Ping.swift */; };
+		A1000012201AAAAA /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000012101AAAAA /* User.swift */; };
+		A1000013201AAAAA /* AccountManagementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000013101AAAAA /* AccountManagementService.swift */; };
+		A1000014201AAAAA /* AdminService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000014101AAAAA /* AdminService.swift */; };
+		A1000015201AAAAA /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000015101AAAAA /* AuthService.swift */; };
+		A1000016201AAAAA /* BreakService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000016101AAAAA /* BreakService.swift */; };
+		A1000017201AAAAA /* ConnectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000017101AAAAA /* ConnectionService.swift */; };
+		A1000018201AAAAA /* DataExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000018101AAAAA /* DataExportService.swift */; };
+		A1000019201AAAAA /* InAppNotificationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000019101AAAAA /* InAppNotificationStore.swift */; };
+		A1000020201AAAAA /* InvitationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000020101AAAAA /* InvitationService.swift */; };
+		A1000021201AAAAA /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000021101AAAAA /* LocationService.swift */; };
+		A1000022201AAAAA /* NotificationPreferencesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000022101AAAAA /* NotificationPreferencesService.swift */; };
+		A1000023201AAAAA /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000023101AAAAA /* NotificationService.swift */; };
+		A1000024201AAAAA /* PingNotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000024101AAAAA /* PingNotificationScheduler.swift */; };
+		A1000025201AAAAA /* PingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000025101AAAAA /* PingService.swift */; };
+		A1000026201AAAAA /* RoleSelectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000026101AAAAA /* RoleSelectionService.swift */; };
+		A1000027201AAAAA /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000027101AAAAA /* StoreKitManager.swift */; };
+		A1000028201AAAAA /* SubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000028101AAAAA /* SubscriptionService.swift */; };
+		A1000029201AAAAA /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000029101AAAAA /* UserService.swift */; };
+		A1000030201AAAAA /* AdminDashboardFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000030101AAAAA /* AdminDashboardFeature.swift */; };
+		A1000031201AAAAA /* AuthenticationFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000031101AAAAA /* AuthenticationFeature.swift */; };
+		A1000032201AAAAA /* BreakDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000032101AAAAA /* BreakDetailView.swift */; };
+		A1000033201AAAAA /* BreaksListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000033101AAAAA /* BreaksListView.swift */; };
+		A1000034201AAAAA /* ScheduleBreakView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000034101AAAAA /* ScheduleBreakView.swift */; };
+		A1000035201AAAAA /* ConnectionManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000035101AAAAA /* ConnectionManagementView.swift */; };
+		A1000036201AAAAA /* ConnectionsFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000036101AAAAA /* ConnectionsFeature.swift */; };
+		A1000037201AAAAA /* DashboardFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000037101AAAAA /* DashboardFeature.swift */; };
+		A1000038201AAAAA /* ReceiverDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000038101AAAAA /* ReceiverDashboardView.swift */; };
+		A1000039201AAAAA /* ReceiverDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000039101AAAAA /* ReceiverDashboardViewModel.swift */; };
+		A1000040201AAAAA /* SenderDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000040101AAAAA /* SenderDashboardView.swift */; };
+		A1000041201AAAAA /* SenderDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000041101AAAAA /* SenderDashboardViewModel.swift */; };
+		A1000042201AAAAA /* NotificationBellButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000042101AAAAA /* NotificationBellButton.swift */; };
+		A1000043201AAAAA /* NotificationCenterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000043101AAAAA /* NotificationCenterView.swift */; };
+		A1000044201AAAAA /* NotificationsFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000044101AAAAA /* NotificationsFeature.swift */; };
+		A1000045201AAAAA /* OnboardingFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000045101AAAAA /* OnboardingFeature.swift */; };
+		A1000046201AAAAA /* ReceiverOnboardingViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000046101AAAAA /* ReceiverOnboardingViews.swift */; };
+		A1000047201AAAAA /* SenderOnboardingViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000047101AAAAA /* SenderOnboardingViews.swift */; };
+		A1000048201AAAAA /* NotificationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000048101AAAAA /* NotificationSettingsView.swift */; };
+		A1000049201AAAAA /* SettingsFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000049101AAAAA /* SettingsFeature.swift */; };
+		A1000050201AAAAA /* SubscriptionFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000050101AAAAA /* SubscriptionFeature.swift */; };
+		A1000051201AAAAA /* ChartsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000051101AAAAA /* ChartsComponents.swift */; };
+		A1000052201AAAAA /* LoadingStates.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000052101AAAAA /* LoadingStates.swift */; };
+		A1000053201AAAAA /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000053101AAAAA /* SharedComponents.swift */; };
+		A1000054201AAAAA /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000054101AAAAA /* DesignSystem.swift */; };
+		A1000055201AAAAA /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000055101AAAAA /* Extensions.swift */; };
+		A1000056201AAAAA /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000056101AAAAA /* Utilities.swift */; };
+		A1000057201AAAAA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000057101AAAAA /* Assets.xcassets */; };
+		A1000058201AAAAA /* Subscription.storekit in Resources */ = {isa = PBXBuildFile; fileRef = A1000058101AAAAA /* Subscription.storekit */; };
+		A10000P1201AAAAA /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = A10000P1001AAAAA /* Supabase */; };
+		A10000P2201AAAAA /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = A10000P2001AAAAA /* KeychainSwift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A1000000001AAAAA /* PRUUF.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PRUUF.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1000001101AAAAA /* PruufApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PruufApp.swift; sourceTree = "<group>"; };
+		A1000002101AAAAA /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A1000003101AAAAA /* AdminConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminConfig.swift; sourceTree = "<group>"; };
+		A1000004101AAAAA /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		A1000005101AAAAA /* SupabaseConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseConfig.swift; sourceTree = "<group>"; };
+		A1000006101AAAAA /* AuditLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuditLog.swift; sourceTree = "<group>"; };
+		A1000007101AAAAA /* Break.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Break.swift; sourceTree = "<group>"; };
+		A1000008101AAAAA /* Connection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connection.swift; sourceTree = "<group>"; };
+		A1000009101AAAAA /* Notification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notification.swift; sourceTree = "<group>"; };
+		A1000010101AAAAA /* PaymentTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentTransaction.swift; sourceTree = "<group>"; };
+		A1000011101AAAAA /* Ping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ping.swift; sourceTree = "<group>"; };
+		A1000012101AAAAA /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		A1000013101AAAAA /* AccountManagementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountManagementService.swift; sourceTree = "<group>"; };
+		A1000014101AAAAA /* AdminService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminService.swift; sourceTree = "<group>"; };
+		A1000015101AAAAA /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		A1000016101AAAAA /* BreakService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreakService.swift; sourceTree = "<group>"; };
+		A1000017101AAAAA /* ConnectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionService.swift; sourceTree = "<group>"; };
+		A1000018101AAAAA /* DataExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExportService.swift; sourceTree = "<group>"; };
+		A1000019101AAAAA /* InAppNotificationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InAppNotificationStore.swift; sourceTree = "<group>"; };
+		A1000020101AAAAA /* InvitationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvitationService.swift; sourceTree = "<group>"; };
+		A1000021101AAAAA /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		A1000022101AAAAA /* NotificationPreferencesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPreferencesService.swift; sourceTree = "<group>"; };
+		A1000023101AAAAA /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		A1000024101AAAAA /* PingNotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PingNotificationScheduler.swift; sourceTree = "<group>"; };
+		A1000025101AAAAA /* PingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PingService.swift; sourceTree = "<group>"; };
+		A1000026101AAAAA /* RoleSelectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoleSelectionService.swift; sourceTree = "<group>"; };
+		A1000027101AAAAA /* StoreKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
+		A1000028101AAAAA /* SubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionService.swift; sourceTree = "<group>"; };
+		A1000029101AAAAA /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
+		A1000030101AAAAA /* AdminDashboardFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminDashboardFeature.swift; sourceTree = "<group>"; };
+		A1000031101AAAAA /* AuthenticationFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationFeature.swift; sourceTree = "<group>"; };
+		A1000032101AAAAA /* BreakDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreakDetailView.swift; sourceTree = "<group>"; };
+		A1000033101AAAAA /* BreaksListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreaksListView.swift; sourceTree = "<group>"; };
+		A1000034101AAAAA /* ScheduleBreakView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleBreakView.swift; sourceTree = "<group>"; };
+		A1000035101AAAAA /* ConnectionManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionManagementView.swift; sourceTree = "<group>"; };
+		A1000036101AAAAA /* ConnectionsFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionsFeature.swift; sourceTree = "<group>"; };
+		A1000037101AAAAA /* DashboardFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardFeature.swift; sourceTree = "<group>"; };
+		A1000038101AAAAA /* ReceiverDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiverDashboardView.swift; sourceTree = "<group>"; };
+		A1000039101AAAAA /* ReceiverDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiverDashboardViewModel.swift; sourceTree = "<group>"; };
+		A1000040101AAAAA /* SenderDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SenderDashboardView.swift; sourceTree = "<group>"; };
+		A1000041101AAAAA /* SenderDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SenderDashboardViewModel.swift; sourceTree = "<group>"; };
+		A1000042101AAAAA /* NotificationBellButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationBellButton.swift; sourceTree = "<group>"; };
+		A1000043101AAAAA /* NotificationCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCenterView.swift; sourceTree = "<group>"; };
+		A1000044101AAAAA /* NotificationsFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsFeature.swift; sourceTree = "<group>"; };
+		A1000045101AAAAA /* OnboardingFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFeature.swift; sourceTree = "<group>"; };
+		A1000046101AAAAA /* ReceiverOnboardingViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiverOnboardingViews.swift; sourceTree = "<group>"; };
+		A1000047101AAAAA /* SenderOnboardingViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SenderOnboardingViews.swift; sourceTree = "<group>"; };
+		A1000048101AAAAA /* NotificationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsView.swift; sourceTree = "<group>"; };
+		A1000049101AAAAA /* SettingsFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsFeature.swift; sourceTree = "<group>"; };
+		A1000050101AAAAA /* SubscriptionFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionFeature.swift; sourceTree = "<group>"; };
+		A1000051101AAAAA /* ChartsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartsComponents.swift; sourceTree = "<group>"; };
+		A1000052101AAAAA /* LoadingStates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingStates.swift; sourceTree = "<group>"; };
+		A1000053101AAAAA /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
+		A1000054101AAAAA /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		A1000055101AAAAA /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		A1000056101AAAAA /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
+		A1000057101AAAAA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A1000058101AAAAA /* Subscription.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Subscription.storekit; sourceTree = "<group>"; };
+		A1000059101AAAAA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1000060101AAAAA /* PRUUF.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PRUUF.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A1FRAME0001AAAAA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000P1201AAAAA /* Supabase in Frameworks */,
+				A10000P2201AAAAA /* KeychainSwift in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A1GROUP0001AAAAA = {
+			isa = PBXGroup;
+			children = (
+				A1GROUP0002AAAAA /* PRUUF */,
+				A1GROUP0003AAAAA /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A1GROUP0002AAAAA /* PRUUF */ = {
+			isa = PBXGroup;
+			children = (
+				A1GROUP0010AAAAA /* App */,
+				A1GROUP0020AAAAA /* Core */,
+				A1GROUP0040AAAAA /* Features */,
+				A1GROUP0080AAAAA /* Shared */,
+				A1GROUP0090AAAAA /* Resources */,
+			);
+			path = PRUUF;
+			sourceTree = "<group>";
+		};
+		A1GROUP0003AAAAA /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1000000001AAAAA /* PRUUF.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A1GROUP0010AAAAA /* App */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001101AAAAA /* PruufApp.swift */,
+				A1000002101AAAAA /* AppDelegate.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A1GROUP0020AAAAA /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				A1GROUP0021AAAAA /* Config */,
+				A1GROUP0022AAAAA /* Models */,
+				A1GROUP0023AAAAA /* Services */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		A1GROUP0021AAAAA /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				A1000003101AAAAA /* AdminConfig.swift */,
+				A1000004101AAAAA /* Config.swift */,
+				A1000005101AAAAA /* SupabaseConfig.swift */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		A1GROUP0022AAAAA /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A1000006101AAAAA /* AuditLog.swift */,
+				A1000007101AAAAA /* Break.swift */,
+				A1000008101AAAAA /* Connection.swift */,
+				A1000009101AAAAA /* Notification.swift */,
+				A1000010101AAAAA /* PaymentTransaction.swift */,
+				A1000011101AAAAA /* Ping.swift */,
+				A1000012101AAAAA /* User.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A1GROUP0023AAAAA /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A1000013101AAAAA /* AccountManagementService.swift */,
+				A1000014101AAAAA /* AdminService.swift */,
+				A1000015101AAAAA /* AuthService.swift */,
+				A1000016101AAAAA /* BreakService.swift */,
+				A1000017101AAAAA /* ConnectionService.swift */,
+				A1000018101AAAAA /* DataExportService.swift */,
+				A1000019101AAAAA /* InAppNotificationStore.swift */,
+				A1000020101AAAAA /* InvitationService.swift */,
+				A1000021101AAAAA /* LocationService.swift */,
+				A1000022101AAAAA /* NotificationPreferencesService.swift */,
+				A1000023101AAAAA /* NotificationService.swift */,
+				A1000024101AAAAA /* PingNotificationScheduler.swift */,
+				A1000025101AAAAA /* PingService.swift */,
+				A1000026101AAAAA /* RoleSelectionService.swift */,
+				A1000027101AAAAA /* StoreKitManager.swift */,
+				A1000028101AAAAA /* SubscriptionService.swift */,
+				A1000029101AAAAA /* UserService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A1GROUP0040AAAAA /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				A1GROUP0041AAAAA /* Admin */,
+				A1GROUP0042AAAAA /* Authentication */,
+				A1GROUP0043AAAAA /* Breaks */,
+				A1GROUP0044AAAAA /* Connections */,
+				A1GROUP0045AAAAA /* Dashboard */,
+				A1GROUP0046AAAAA /* Notifications */,
+				A1GROUP0047AAAAA /* Onboarding */,
+				A1GROUP0048AAAAA /* Settings */,
+				A1GROUP0049AAAAA /* Subscription */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		A1GROUP0041AAAAA /* Admin */ = {
+			isa = PBXGroup;
+			children = (
+				A1000030101AAAAA /* AdminDashboardFeature.swift */,
+			);
+			path = Admin;
+			sourceTree = "<group>";
+		};
+		A1GROUP0042AAAAA /* Authentication */ = {
+			isa = PBXGroup;
+			children = (
+				A1000031101AAAAA /* AuthenticationFeature.swift */,
+			);
+			path = Authentication;
+			sourceTree = "<group>";
+		};
+		A1GROUP0043AAAAA /* Breaks */ = {
+			isa = PBXGroup;
+			children = (
+				A1000032101AAAAA /* BreakDetailView.swift */,
+				A1000033101AAAAA /* BreaksListView.swift */,
+				A1000034101AAAAA /* ScheduleBreakView.swift */,
+			);
+			path = Breaks;
+			sourceTree = "<group>";
+		};
+		A1GROUP0044AAAAA /* Connections */ = {
+			isa = PBXGroup;
+			children = (
+				A1000035101AAAAA /* ConnectionManagementView.swift */,
+				A1000036101AAAAA /* ConnectionsFeature.swift */,
+			);
+			path = Connections;
+			sourceTree = "<group>";
+		};
+		A1GROUP0045AAAAA /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				A1000037101AAAAA /* DashboardFeature.swift */,
+				A1GROUP0045BAAAAA /* ReceiverDashboard */,
+				A1GROUP0045CAAAAA /* SenderDashboard */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		A1GROUP0045BAAAAA /* ReceiverDashboard */ = {
+			isa = PBXGroup;
+			children = (
+				A1000038101AAAAA /* ReceiverDashboardView.swift */,
+				A1000039101AAAAA /* ReceiverDashboardViewModel.swift */,
+			);
+			path = ReceiverDashboard;
+			sourceTree = "<group>";
+		};
+		A1GROUP0045CAAAAA /* SenderDashboard */ = {
+			isa = PBXGroup;
+			children = (
+				A1000040101AAAAA /* SenderDashboardView.swift */,
+				A1000041101AAAAA /* SenderDashboardViewModel.swift */,
+			);
+			path = SenderDashboard;
+			sourceTree = "<group>";
+		};
+		A1GROUP0046AAAAA /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				A1000042101AAAAA /* NotificationBellButton.swift */,
+				A1000043101AAAAA /* NotificationCenterView.swift */,
+				A1000044101AAAAA /* NotificationsFeature.swift */,
+			);
+			path = Notifications;
+			sourceTree = "<group>";
+		};
+		A1GROUP0047AAAAA /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				A1000045101AAAAA /* OnboardingFeature.swift */,
+				A1000046101AAAAA /* ReceiverOnboardingViews.swift */,
+				A1000047101AAAAA /* SenderOnboardingViews.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		A1GROUP0048AAAAA /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				A1000048101AAAAA /* NotificationSettingsView.swift */,
+				A1000049101AAAAA /* SettingsFeature.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		A1GROUP0049AAAAA /* Subscription */ = {
+			isa = PBXGroup;
+			children = (
+				A1000050101AAAAA /* SubscriptionFeature.swift */,
+			);
+			path = Subscription;
+			sourceTree = "<group>";
+		};
+		A1GROUP0080AAAAA /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				A1GROUP0081AAAAA /* Components */,
+				A1GROUP0082AAAAA /* DesignSystem */,
+				A1GROUP0083AAAAA /* Extensions */,
+				A1GROUP0084AAAAA /* Utilities */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		A1GROUP0081AAAAA /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A1000051101AAAAA /* ChartsComponents.swift */,
+				A1000052101AAAAA /* LoadingStates.swift */,
+				A1000053101AAAAA /* SharedComponents.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		A1GROUP0082AAAAA /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				A1000054101AAAAA /* DesignSystem.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		A1GROUP0083AAAAA /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				A1000055101AAAAA /* Extensions.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		A1GROUP0084AAAAA /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				A1000056101AAAAA /* Utilities.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		A1GROUP0090AAAAA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A1000057101AAAAA /* Assets.xcassets */,
+				A1000058101AAAAA /* Subscription.storekit */,
+				A1000059101AAAAA /* Info.plist */,
+				A1000060101AAAAA /* PRUUF.entitlements */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A1TARGET001AAAAA /* PRUUF */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1CONFLIST1AAAAA /* Build configuration list for PBXNativeTarget "PRUUF" */;
+			buildPhases = (
+				A1SRCBLD001AAAAA /* Sources */,
+				A1FRAME0001AAAAA /* Frameworks */,
+				A1RESBLD001AAAAA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PRUUF;
+			packageProductDependencies = (
+				A10000P1001AAAAA /* Supabase */,
+				A10000P2001AAAAA /* KeychainSwift */,
+			);
+			productName = PRUUF;
+			productReference = A1000000001AAAAA /* PRUUF.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1PROJECT01AAAAA /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					A1TARGET001AAAAA = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = A1CONFLIST0AAAAA /* Build configuration list for PBXProject "PRUUF" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A1GROUP0001AAAAA;
+			packageReferences = (
+				A1PKGREF001AAAAA /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				A1PKGREF002AAAAA /* XCRemoteSwiftPackageReference "keychain-swift" */,
+			);
+			productRefGroup = A1GROUP0003AAAAA /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A1TARGET001AAAAA /* PRUUF */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A1RESBLD001AAAAA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000057201AAAAA /* Assets.xcassets in Resources */,
+				A1000058201AAAAA /* Subscription.storekit in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A1SRCBLD001AAAAA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000001201AAAAA /* PruufApp.swift in Sources */,
+				A1000002201AAAAA /* AppDelegate.swift in Sources */,
+				A1000003201AAAAA /* AdminConfig.swift in Sources */,
+				A1000004201AAAAA /* Config.swift in Sources */,
+				A1000005201AAAAA /* SupabaseConfig.swift in Sources */,
+				A1000006201AAAAA /* AuditLog.swift in Sources */,
+				A1000007201AAAAA /* Break.swift in Sources */,
+				A1000008201AAAAA /* Connection.swift in Sources */,
+				A1000009201AAAAA /* Notification.swift in Sources */,
+				A1000010201AAAAA /* PaymentTransaction.swift in Sources */,
+				A1000011201AAAAA /* Ping.swift in Sources */,
+				A1000012201AAAAA /* User.swift in Sources */,
+				A1000013201AAAAA /* AccountManagementService.swift in Sources */,
+				A1000014201AAAAA /* AdminService.swift in Sources */,
+				A1000015201AAAAA /* AuthService.swift in Sources */,
+				A1000016201AAAAA /* BreakService.swift in Sources */,
+				A1000017201AAAAA /* ConnectionService.swift in Sources */,
+				A1000018201AAAAA /* DataExportService.swift in Sources */,
+				A1000019201AAAAA /* InAppNotificationStore.swift in Sources */,
+				A1000020201AAAAA /* InvitationService.swift in Sources */,
+				A1000021201AAAAA /* LocationService.swift in Sources */,
+				A1000022201AAAAA /* NotificationPreferencesService.swift in Sources */,
+				A1000023201AAAAA /* NotificationService.swift in Sources */,
+				A1000024201AAAAA /* PingNotificationScheduler.swift in Sources */,
+				A1000025201AAAAA /* PingService.swift in Sources */,
+				A1000026201AAAAA /* RoleSelectionService.swift in Sources */,
+				A1000027201AAAAA /* StoreKitManager.swift in Sources */,
+				A1000028201AAAAA /* SubscriptionService.swift in Sources */,
+				A1000029201AAAAA /* UserService.swift in Sources */,
+				A1000030201AAAAA /* AdminDashboardFeature.swift in Sources */,
+				A1000031201AAAAA /* AuthenticationFeature.swift in Sources */,
+				A1000032201AAAAA /* BreakDetailView.swift in Sources */,
+				A1000033201AAAAA /* BreaksListView.swift in Sources */,
+				A1000034201AAAAA /* ScheduleBreakView.swift in Sources */,
+				A1000035201AAAAA /* ConnectionManagementView.swift in Sources */,
+				A1000036201AAAAA /* ConnectionsFeature.swift in Sources */,
+				A1000037201AAAAA /* DashboardFeature.swift in Sources */,
+				A1000038201AAAAA /* ReceiverDashboardView.swift in Sources */,
+				A1000039201AAAAA /* ReceiverDashboardViewModel.swift in Sources */,
+				A1000040201AAAAA /* SenderDashboardView.swift in Sources */,
+				A1000041201AAAAA /* SenderDashboardViewModel.swift in Sources */,
+				A1000042201AAAAA /* NotificationBellButton.swift in Sources */,
+				A1000043201AAAAA /* NotificationCenterView.swift in Sources */,
+				A1000044201AAAAA /* NotificationsFeature.swift in Sources */,
+				A1000045201AAAAA /* OnboardingFeature.swift in Sources */,
+				A1000046201AAAAA /* ReceiverOnboardingViews.swift in Sources */,
+				A1000047201AAAAA /* SenderOnboardingViews.swift in Sources */,
+				A1000048201AAAAA /* NotificationSettingsView.swift in Sources */,
+				A1000049201AAAAA /* SettingsFeature.swift in Sources */,
+				A1000050201AAAAA /* SubscriptionFeature.swift in Sources */,
+				A1000051201AAAAA /* ChartsComponents.swift in Sources */,
+				A1000052201AAAAA /* LoadingStates.swift in Sources */,
+				A1000053201AAAAA /* SharedComponents.swift in Sources */,
+				A1000054201AAAAA /* DesignSystem.swift in Sources */,
+				A1000055201AAAAA /* Extensions.swift in Sources */,
+				A1000056201AAAAA /* Utilities.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A1CONFIG001AAAAA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A1CONFIG002AAAAA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A1CONFIG003AAAAA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PRUUF/Resources/PRUUF.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XZAXF7Q3JG;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PRUUF/Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PRUUF;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pruuf.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A1CONFIG004AAAAA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PRUUF/Resources/PRUUF.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XZAXF7Q3JG;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PRUUF/Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PRUUF;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pruuf.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A1CONFLIST0AAAAA /* Build configuration list for PBXProject "PRUUF" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1CONFIG001AAAAA /* Debug */,
+				A1CONFIG002AAAAA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1CONFLIST1AAAAA /* Build configuration list for PBXNativeTarget "PRUUF" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1CONFIG003AAAAA /* Debug */,
+				A1CONFIG004AAAAA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A1PKGREF001AAAAA /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+		A1PKGREF002AAAAA /* XCRemoteSwiftPackageReference "keychain-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/evgenyneu/keychain-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 24.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A10000P1001AAAAA /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1PKGREF001AAAAA /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+		A10000P2001AAAAA /* KeychainSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1PKGREF002AAAAA /* XCRemoteSwiftPackageReference "keychain-swift" */;
+			productName = KeychainSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A1PROJECT01AAAAA /* Project object */;
+}

@@ -1,0 +1,114 @@
+{
+  "identifier" : "CB0E93F9-7B8A-4E43-A8B6-7C8E9F0A1B2C",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "1234567890",
+    "_developerTeamID" : "TEAMID123",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 758502000,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Refund Request Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "PRUUF_RECEIVER_SUBSCRIPTION",
+      "localizations" : [
+        {
+          "description" : "Unlock receiver features to monitor your loved ones with peace of mind",
+          "displayName" : "PRUUF Receiver",
+          "locale" : "en_US"
+        }
+      ],
+      "name" : "PRUUF Receiver Subscription",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "2.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "F8A2E4C6-D9B1-4E53-87C2-1A3B5D7E9F01",
+          "introductoryOffer" : {
+            "displayPrice" : "0",
+            "internalID" : "A1B2C3D4-E5F6-7890-ABCD-EF1234567890",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P2W"
+          },
+          "localizations" : [
+            {
+              "description" : "Get daily check-in notifications and peace of mind knowing your loved ones are okay",
+              "displayName" : "Monthly Receiver",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.pruuf.receiver.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Receiver Monthly Subscription",
+          "subscriptionGroupID" : "PRUUF_RECEIVER_SUBSCRIPTION",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

@@ -1,0 +1,68 @@
+# Supabase Configuration for PRUUF iOS App
+# Project: oaiteiceynliooxpeuxt
+# URL: https://oaiteiceynliooxpeuxt.supabase.co
+
+project_id = "oaiteiceynliooxpeuxt"
+
+[api]
+# Port to use for the API URL.
+port = 54321
+# Schemas to expose in your API. Tables, views and functions in this schema will get API endpoints.
+schemas = ["public", "graphql_public"]
+# Extra schemas to add to the search_path of every request.
+extra_search_path = ["public", "extensions"]
+# The maximum number of rows returned from a view, table, or stored procedure.
+max_rows = 1000
+
+[auth]
+# The base URL of your application.
+site_url = "pruuf://auth/callback"
+# A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
+additional_redirect_urls = ["pruuf://auth/callback"]
+# How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 seconds (one week).
+jwt_expiry = 3600
+# Allow/disallow new user signups to your project.
+enable_signup = true
+# Allow/disallow anonymous sign-ins to your project.
+# Enabled for phone verification flow (uses APNs push notifications instead of SMS)
+enable_anonymous_sign_ins = true
+
+# SMS authentication has been removed - using APNs push notifications for verification instead
+# All verification codes are sent via APNs push notifications to the user's device
+
+[storage]
+# Maximum file size in bytes (10MB default)
+file_size_limit = "10MB"
+
+[storage.buckets.avatars]
+public = true
+file_size_limit = "5MB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+
+[storage.buckets.profile-photos]
+public = false
+file_size_limit = "10MB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/heic", "image/webp"]
+
+[realtime]
+# Enable realtime for all tables by default
+enabled = true
+
+# Edge Functions are enabled by default
+
+[edge_runtime]
+# Edge Runtime configuration
+enabled = true
+
+[scheduled]
+# Scheduled jobs for ping monitoring
+# These run as pg_cron jobs in Supabase
+
+# Daily ping check - runs every day at midnight UTC
+# SELECT cron.schedule('daily-ping-check', '0 0 * * *', 'SELECT check_daily_pings()');
+
+# Missed ping notification - runs every 5 minutes to check for missed pings
+# SELECT cron.schedule('missed-ping-alert', '*/5 * * * *', 'SELECT notify_missed_pings()');
+
+# Subscription renewal check - runs daily at 6 AM UTC
+# SELECT cron.schedule('subscription-check', '0 6 * * *', 'SELECT check_subscriptions()');

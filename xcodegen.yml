@@ -1,0 +1,53 @@
+name: PRUUF
+options:
+  deploymentTarget:
+    iOS: "15.0"
+settings:
+  base:
+    CODE_SIGNING_ALLOWED: NO
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGNING_IDENTITY: ""
+    DEVELOPMENT_TEAM: ""
+packages:
+  supabase-swift:
+    url: https://github.com/supabase/supabase-swift.git
+    from: 2.0.0
+  keychain-swift:
+    url: https://github.com/evgenyneu/keychain-swift.git
+    from: 24.0.0
+
+targets:
+  PRUUF:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: PRUUF
+    resources:
+      - path: PRUUF/Resources
+    info:
+      path: PRUUF/Resources/Info.plist
+    entitlements:
+      path: PRUUF/Resources/PRUUF.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pruuf.ios
+        TARGETED_DEVICE_FAMILY: "1,2"
+    dependencies:
+      - package: supabase-swift
+        product: Supabase
+      - package: keychain-swift
+        product: KeychainSwift
+
+  PRUUFTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: Tests/PRUUFTests
+    dependencies:
+      - target: PRUUF
+    settings:
+      base:
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/PRUUF.app/PRUUF
+        BUNDLE_LOADER: $(TEST_HOST)
