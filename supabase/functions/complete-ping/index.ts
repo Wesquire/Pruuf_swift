@@ -136,14 +136,116 @@ serve(async (req) => {
       throw new Error(`Failed to fetch pings: ${pingError.message}`);
     }
 
+    // If no pending pings, still send "I'm OK" notification to all active receivers
+    // Requirement: Send notifications every time sender hits OK, even if window closed
     if (!pings || pings.length === 0) {
-      console.log(`[complete-ping] No pending pings found for sender: ${sender_id}`);
+      console.log(`[complete-ping] No pending pings found for sender: ${sender_id}, sending confirmatory notification`);
+
+      // Fetch active receivers from connections table
+      const { data: connections, error: connError } = await supabaseClient
+        .from("connections")
+        .select("receiver_id")
+        .eq("sender_id", sender_id)
+        .eq("status", "active");
+
+      if (connError) {
+        console.error(`[complete-ping] Failed to fetch connections: ${connError.message}`);
+      }
+
+      const receiversFromConnections = connections?.map((c: { receiver_id: string }) => c.receiver_id) || [];
+      const completedAt = now.toISOString();
+
+      if (receiversFromConnections.length > 0) {
+        // Get sender's display info for notifications
+        const { data: sender, error: senderError } = await supabaseClient
+          .from("users")
+          .select("id, phone_number, primary_role")
+          .eq("id", sender_id)
+          .single();
+
+        if (senderError) {
+          console.error(`[complete-ping] Failed to fetch sender info: ${senderError.message}`);
+        }
+
+        const senderName = (sender as UserRecord)?.phone_number || "Your connection";
+
+        // Create in-app notifications for all receivers
+        const notifications: NotificationInsert[] = receiversFromConnections.map((receiverId: string) => ({
+          user_id: receiverId,
+          type: "sender_ok_confirmation",
+          title: "Check-In Received",
+          body: `${senderName} is okay!`,
+          metadata: {
+            sender_id: sender_id,
+            method: method,
+            is_late: false,
+            completed_at: completedAt,
+            ping_count: 0,
+            is_confirmatory: true, // Flag to indicate this is a repeat/confirmatory notification
+          },
+        }));
+
+        const { error: notifyError } = await supabaseClient
+          .from("notifications")
+          .insert(notifications);
+
+        if (notifyError) {
+          console.error(`[complete-ping] Failed to create notifications: ${notifyError.message}`);
+        } else {
+          console.log(`[complete-ping] Created ${notifications.length} confirmatory notifications`);
+        }
+
+        // Send push notifications via APNs
+        try {
+          const { error: pushError } = await supabaseClient.functions.invoke(
+            "send-ping-notification",
+            {
+              body: {
+                type: "sender_ok_confirmation",
+                sender_id: sender_id,
+                receiver_ids: receiversFromConnections,
+                ping_id: null,
+                additional_data: {
+                  completed_at: completedAt,
+                  method: method,
+                  is_confirmatory: true,
+                },
+              },
+            }
+          );
+
+          if (pushError) {
+            console.error(`[complete-ping] Failed to send push notifications: ${pushError.message}`);
+          } else {
+            console.log(`[complete-ping] Sent confirmatory push notifications to ${receiversFromConnections.length} receivers`);
+          }
+        } catch (pushErr) {
+          console.error(`[complete-ping] Push notification error:`, pushErr);
+        }
+
+        // Log audit event for confirmatory ping
+        await supabaseClient.from("audit_logs").insert({
+          user_id: sender_id,
+          action: "confirmatory_ping",
+          resource_type: "ping",
+          details: {
+            method,
+            completed_count: 0,
+            receivers_notified: receiversFromConnections.length,
+            is_confirmatory: true,
+            timestamp: completedAt,
+          },
+        });
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
-          message: "No pending pings to complete",
+          message: "No pending pings to complete, but receivers notified",
           completed_count: 0,
           late_count: 0,
+          on_time_count: 0,
+          receivers_notified: receiversFromConnections.length,
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },

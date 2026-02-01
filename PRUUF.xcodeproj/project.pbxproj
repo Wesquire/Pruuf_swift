@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -47,6 +47,7 @@
 		950CA1C8C9A41D92C6D5DAA1 /* Break.swift in Sources */ = {isa = PBXBuildFile; fileRef = 466EAFFA3EC645213B045955 /* Break.swift */; };
 		9D3F05E46E20C8CDC6DA7D77 /* AuthenticationFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C6CD4F4D55A913585776F09 /* AuthenticationFeature.swift */; };
 		9DF083FC66F706BE8F6CF4A4 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C98C21D157084D521FEEFE4 /* SharedComponents.swift */; };
+		SCB02024020100000002 /* SenderCodeBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = SCB02024020100000001 /* SenderCodeBadge.swift */; };
 		9EBEBFF029E9502F604F290B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C41599CE8DE6A5551B84222 /* AppDelegate.swift */; };
 		A0681D166FA210D70F0EBF6C /* OnboardingFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83980736708E7CFFABA6CEC6 /* OnboardingFeature.swift */; };
 		A122FB096D87D6358885ACDA /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A8BDC595446E9C8CC12ACB /* NotificationService.swift */; };
@@ -69,6 +70,8 @@
 		DF7E318739E67111670BA0EB /* SenderOnboardingViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22217711CE2DA9FE3A91D88C /* SenderOnboardingViews.swift */; };
 		E5B1EC9D86F70299D72C1CB3 /* SettingsFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EE4BCF3A8D0A7314F2222F6 /* SettingsFeature.swift */; };
 		EA18A5C2DFF684546C1095ED /* ConnectionsFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC624159F261833EA52979 /* ConnectionsFeature.swift */; };
+		RCVE2024020100000002 /* ReceiverCodeEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = RCVE2024020100000001 /* ReceiverCodeEntryView.swift */; };
+		CPVW2024020100000002 /* ContactPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CPVW2024020100000001 /* ContactPickerView.swift */; };
 		F037100AED2284E444F4C249 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1800878F829F3179C0A0BFAD /* Config.swift */; };
 		F2BE7BF54B84D79637FB5CCB /* PingNotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D34F909FDD4C4013CC4E5603 /* PingNotificationScheduler.swift */; };
 		F83AFEE375534AAF33DEB92F /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4B383873B450BDB9EBCFB /* User.swift */; };
@@ -91,12 +94,13 @@
 		147AFFA3681CE7E828500C81 /* AccountManagementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountManagementService.swift; sourceTree = "<group>"; };
 		1800878F829F3179C0A0BFAD /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		1C98C21D157084D521FEEFE4 /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
+		SCB02024020100000001 /* SenderCodeBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SenderCodeBadge.swift; sourceTree = "<group>"; };
 		22217711CE2DA9FE3A91D88C /* SenderOnboardingViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SenderOnboardingViews.swift; sourceTree = "<group>"; };
-		22459EF84AE7D0111D0729AC /* Subscription.storekit */ = {isa = PBXFileReference; path = Subscription.storekit; sourceTree = "<group>"; };
+		22459EF84AE7D0111D0729AC /* Subscription.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Subscription.storekit; sourceTree = "<group>"; };
 		2832DE48EFEC959439D86807 /* PingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PingService.swift; sourceTree = "<group>"; };
 		289DCD9977605891CCD89756 /* SenderDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SenderDashboardViewModel.swift; sourceTree = "<group>"; };
 		2AFFDE53DE718BE0CB582B97 /* BreakService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreakService.swift; sourceTree = "<group>"; };
-		2B637B480680521EDCA26D93 /* PRUUFTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PRUUFTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2B637B480680521EDCA26D93 /* PRUUFTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PRUUFTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2EACE436B1E398956A48E04B /* InvitationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvitationService.swift; sourceTree = "<group>"; };
 		2FE07DA61A96C0E67F6D1519 /* Ping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ping.swift; sourceTree = "<group>"; };
 		362C819F2E7B1F737E87E253 /* SupabaseConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseConfig.swift; sourceTree = "<group>"; };
@@ -116,6 +120,8 @@
 		6EB21BACDD2B81E0EDF9EE0E /* SubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionService.swift; sourceTree = "<group>"; };
 		6FBF670D01AA88C138AC79B7 /* ReceiverDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiverDashboardViewModel.swift; sourceTree = "<group>"; };
 		6FDC624159F261833EA52979 /* ConnectionsFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionsFeature.swift; sourceTree = "<group>"; };
+		RCVE2024020100000001 /* ReceiverCodeEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiverCodeEntryView.swift; sourceTree = "<group>"; };
+		CPVW2024020100000001 /* ContactPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactPickerView.swift; sourceTree = "<group>"; };
 		715027D4DA73F66B715CEE44 /* PaymentTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentTransaction.swift; sourceTree = "<group>"; };
 		743475414BD5B8D4F3910F94 /* ChartsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartsComponents.swift; sourceTree = "<group>"; };
 		7C41599CE8DE6A5551B84222 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -142,9 +148,10 @@
 		D34F909FDD4C4013CC4E5603 /* PingNotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PingNotificationScheduler.swift; sourceTree = "<group>"; };
 		D39F18349724A3F634ECAAAA /* PruufApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PruufApp.swift; sourceTree = "<group>"; };
 		DB8DD3FE8A027630465F914B /* ScheduleBreakView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleBreakView.swift; sourceTree = "<group>"; };
+		E320B4E82F233BCD0015410B /* PRUUF copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "PRUUF copy-Info.plist"; path = "/Users/wesquire/Github/Pruuf_Swift/PRUUF copy-Info.plist"; sourceTree = "<absolute>"; };
 		E4B56E5D8260FA764CAEB9BD /* ReceiverOnboardingViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiverOnboardingViews.swift; sourceTree = "<group>"; };
 		E95B59C9CDDFF6273EBFD980 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
-		EAE7FF65A6FC660E3E73CF02 /* PRUUF.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = PRUUF.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EAE7FF65A6FC660E3E73CF02 /* PRUUF.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PRUUF.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1DA25FB10A8E94353E2C878 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		F69E10D3F828040FC95C4473 /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
 		F76A9862B93FEAB80BCCEE79 /* SubscriptionFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionFeature.swift; sourceTree = "<group>"; };
@@ -248,6 +255,7 @@
 			children = (
 				743475414BD5B8D4F3910F94 /* ChartsComponents.swift */,
 				A38E81931D5B6B73C82B7239 /* LoadingStates.swift */,
+				SCB02024020100000001 /* SenderCodeBadge.swift */,
 				1C98C21D157084D521FEEFE4 /* SharedComponents.swift */,
 			);
 			path = Components;
@@ -258,6 +266,8 @@
 			children = (
 				C293F4AECBF489F35F283E96 /* ConnectionManagementView.swift */,
 				6FDC624159F261833EA52979 /* ConnectionsFeature.swift */,
+				RCVE2024020100000001 /* ReceiverCodeEntryView.swift */,
+				CPVW2024020100000001 /* ContactPickerView.swift */,
 			);
 			path = Connections;
 			sourceTree = "<group>";
@@ -276,6 +286,7 @@
 				AA0BC1602B892E7C2D295673 /* PRUUF */,
 				8A67F664673FD9DA248D85F8 /* PRUUFTests */,
 				A21C60481F387B846FBB5D36 /* Products */,
+				E320B4E82F233BCD0015410B /* PRUUF copy-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -367,7 +378,6 @@
 				BC3C505278AA0FDA4E3D0499 /* Resources */,
 				94F86440805C74B64F96560B /* Shared */,
 			);
-			name = PRUUF;
 			path = PRUUF;
 			sourceTree = "<group>";
 		};
@@ -499,11 +509,8 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
-					9BF1BFD9CF086696F5C1E969 = {
-						DevelopmentTeam = "";
-					};
 					ADBA5046F550BC7AB4F02CB2 = {
 						DevelopmentTeam = "";
 					};
@@ -523,7 +530,6 @@
 				E5A17A7FE46B9827B08B736E /* XCRemoteSwiftPackageReference "keychain-swift" */,
 				D9A57D1140807FA97DB06D0A /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -568,6 +574,8 @@
 				243700801CF51894FD86773D /* ConnectionManagementView.swift in Sources */,
 				85C16DB07D1272F973AE3746 /* ConnectionService.swift in Sources */,
 				EA18A5C2DFF684546C1095ED /* ConnectionsFeature.swift in Sources */,
+				RCVE2024020100000002 /* ReceiverCodeEntryView.swift in Sources */,
+				CPVW2024020100000002 /* ContactPickerView.swift in Sources */,
 				54E847C635BC97448BCB8A42 /* DashboardFeature.swift in Sources */,
 				D5A8D10CABA6ED2A65089CBF /* DataExportService.swift in Sources */,
 				AB56D9E5CDF2026DDA73D159 /* DesignSystem.swift in Sources */,
@@ -599,6 +607,7 @@
 				DF7E318739E67111670BA0EB /* SenderOnboardingViews.swift in Sources */,
 				E5B1EC9D86F70299D72C1CB3 /* SettingsFeature.swift in Sources */,
 				9DF083FC66F706BE8F6CF4A4 /* SharedComponents.swift in Sources */,
+				SCB02024020100000002 /* SenderCodeBadge.swift in Sources */,
 				40281519BB49DB9C5CC04CDE /* StoreKitManager.swift in Sources */,
 				C70AB324606EBB4420B40D10 /* SubscriptionFeature.swift in Sources */,
 				22267D93511B9331AE3D45C7 /* SubscriptionService.swift in Sources */,
@@ -636,6 +645,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -673,6 +683,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -686,6 +697,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -712,15 +724,26 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = YES;
+				"CODE_SIGNING_IDENTITY[arch=*]" = "";
+				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_ENTITLEMENTS = PRUUF/Resources/PRUUF.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = XZAXF7Q3JG;
 				INFOPLIST_FILE = PRUUF/Resources/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.pruuf.ios;
+				PRODUCT_BUNDLE_IDENTIFIER = Me.pruuf.app;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -746,15 +769,26 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_ENTITLEMENTS = PRUUF/Resources/PRUUF.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_ENTITLEMENTS[sdk=*]" = PRUUF/Resources/PRUUF.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = XZAXF7Q3JG;
 				INFOPLIST_FILE = PRUUF/Resources/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.pruuf.ios;
+				PRODUCT_BUNDLE_IDENTIFIER = Me.pruuf.app;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -764,6 +798,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -799,8 +834,10 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=*]" = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -821,6 +858,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;

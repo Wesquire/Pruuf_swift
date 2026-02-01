@@ -123,9 +123,9 @@ struct PaywallView: View {
                 .font(.headline)
 
             FeatureRow(icon: "bell.fill", text: "Daily check-in notifications")
-            FeatureRow(icon: "clock.fill", text: "Real-time ping status updates")
+            FeatureRow(icon: "clock.fill", text: "Real-time Pruuf status updates")
             FeatureRow(icon: "flame.fill", text: "Streak tracking for each sender")
-            FeatureRow(icon: "calendar", text: "Full ping history access")
+            FeatureRow(icon: "calendar", text: "Full Pruuf history access")
             FeatureRow(icon: "person.2.fill", text: "Unlimited sender connections")
         }
         .padding()

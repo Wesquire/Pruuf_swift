@@ -312,8 +312,8 @@ final class ReceiverDashboardViewModel: ObservableObject {
                 components.minute = minute
 
                 if let pingTime = calendar.date(from: components) {
-                    // Add 90-minute grace period
-                    let deadline = calendar.date(byAdding: .minute, value: 90, to: pingTime) ?? pingTime
+                    // Add 60-minute grace period
+                    let deadline = calendar.date(byAdding: .minute, value: 60, to: pingTime) ?? pingTime
 
                     if Date() > deadline {
                         return .missed(lastSeen: pingTime)
@@ -577,17 +577,17 @@ enum SenderPingStatus: Equatable {
         switch self {
         case .completed(let time):
             formatter.dateFormat = "h:mm a"
-            return "Pinged today at \(formatter.string(from: time))"
+            return "Pruuf sent today at \(formatter.string(from: time))"
         case .expected(let deadline):
             formatter.dateFormat = "h:mm a"
-            return "Ping expected by \(formatter.string(from: deadline))"
+            return "Pruuf expected by \(formatter.string(from: deadline))"
         case .missed(let lastSeen):
             formatter.dateStyle = .short
             formatter.timeStyle = .short
-            return "Missed ping - Last seen \(formatter.string(from: lastSeen))"
+            return "Missed Pruuf - Last seen \(formatter.string(from: lastSeen))"
         case .onBreak(let until):
             formatter.dateFormat = "MMM d"
-            return "On break until \(formatter.string(from: until))"
+            return "On Pruuf Pause until \(formatter.string(from: until))"
         }
     }
 

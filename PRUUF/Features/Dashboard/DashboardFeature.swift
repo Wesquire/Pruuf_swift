@@ -41,349 +41,18 @@ struct DashboardCoordinatorView: View {
 // MARK: - Dual Role Dashboard View
 
 /// Dashboard for users with both sender and receiver roles (Phase 4.3)
-/// Uses tab navigation to switch between sender and receiver views
+/// Simplified to show only sender dashboard (Their Pruufs tab removed per Requirement 11)
 struct DualRoleDashboardView: View {
     let authService: AuthService
-    @StateObject private var viewModel: DualRoleDashboardViewModel
-    @State private var selectedTab: DualRoleTab = .myPings
 
     init(authService: AuthService) {
         self.authService = authService
-        self._viewModel = StateObject(wrappedValue: DualRoleDashboardViewModel(authService: authService))
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Tab bar at top
-            tabBar
-
-            // Content area
-            Group {
-                switch selectedTab {
-                case .myPings:
-                    SenderDashboardView(authService: authService)
-                case .theirPings:
-                    ReceiverDashboardView(authService: authService)
-                }
-            }
-        }
-        .task {
-            await viewModel.loadBadgeCounts()
-        }
-        .alert("Subscription Required", isPresented: $viewModel.showSubscriptionAlert) {
-            Button("Subscribe") {
-                viewModel.showSubscriptionSheet = true
-            }
-            Button("Cancel", role: .cancel) {
-                selectedTab = .myPings
-            }
-        } message: {
-            Text("You need an active subscription to view your senders. Subscribe now to get peace of mind knowing your loved ones are safe.")
-        }
-        .sheet(isPresented: $viewModel.showSubscriptionSheet) {
-            SubscriptionRequiredSheet(onSubscribe: {
-                viewModel.showSubscriptionSheet = false
-            }, onCancel: {
-                viewModel.showSubscriptionSheet = false
-                selectedTab = .myPings
-            })
-        }
-        .onChange(of: selectedTab) { newTab in
-            if newTab == .theirPings {
-                viewModel.checkSubscriptionRequirement()
-            }
-        }
-    }
-
-    // MARK: - Tab Bar
-
-    private var tabBar: some View {
-        HStack(spacing: 0) {
-            tabButton(for: .myPings)
-            tabButton(for: .theirPings)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(Color(.systemGroupedBackground))
-    }
-
-    private func tabButton(for tab: DualRoleTab) -> some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                selectedTab = tab
-            }
-            // Haptic feedback
-            let generator = UIImpactFeedbackGenerator(style: .light)
-            generator.impactOccurred()
-        } label: {
-            HStack(spacing: 6) {
-                Text(tab.title)
-                    .font(.subheadline)
-                    .fontWeight(selectedTab == tab ? .semibold : .regular)
-
-                // Badge for notifications
-                if let badgeCount = badgeCount(for: tab), badgeCount > 0 {
-                    Text("\(badgeCount)")
-                        .font(.caption2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(badgeColor(for: tab))
-                        .clipShape(Capsule())
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(selectedTab == tab ? Color.blue : Color.clear)
-            )
-            .foregroundColor(selectedTab == tab ? .white : .primary)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func badgeCount(for tab: DualRoleTab) -> Int? {
-        switch tab {
-        case .myPings:
-            return viewModel.senderPendingCount > 0 ? viewModel.senderPendingCount : nil
-        case .theirPings:
-            return viewModel.receiverAlertCount > 0 ? viewModel.receiverAlertCount : nil
-        }
-    }
-
-    private func badgeColor(for tab: DualRoleTab) -> Color {
-        switch tab {
-        case .myPings:
-            // Yellow for pending action (need to ping)
-            return .orange
-        case .theirPings:
-            // Red for missed pings from senders
-            return .red
-        }
-    }
-}
-
-// MARK: - Dual Role Tab
-
-/// Tab options for dual role dashboard
-enum DualRoleTab: Int, CaseIterable {
-    case myPings = 0
-    case theirPings = 1
-
-    var title: String {
-        switch self {
-        case .myPings:
-            return "My Pings"
-        case .theirPings:
-            return "Their Pings"
-        }
-    }
-
-    var iconName: String {
-        switch self {
-        case .myPings:
-            return "arrow.up.circle.fill"
-        case .theirPings:
-            return "arrow.down.circle.fill"
-        }
-    }
-}
-
-// MARK: - Dual Role Dashboard ViewModel
-
-/// ViewModel for the Dual Role Dashboard
-/// Manages badge counts and subscription status
-@MainActor
-final class DualRoleDashboardViewModel: ObservableObject {
-
-    // MARK: - Published Properties
-
-    /// Number of pending actions for sender (e.g., ping not sent today)
-    @Published private(set) var senderPendingCount: Int = 0
-
-    /// Number of alerts for receiver (e.g., missed pings from senders)
-    @Published private(set) var receiverAlertCount: Int = 0
-
-    /// Whether subscription alert should be shown
-    @Published var showSubscriptionAlert: Bool = false
-
-    /// Whether subscription sheet should be shown
-    @Published var showSubscriptionSheet: Bool = false
-
-    // MARK: - Private Properties
-
-    private let authService: AuthService
-    private let database: PostgrestClient
-
-    // MARK: - Computed Properties
-
-    /// Current user's ID
-    var userId: UUID? {
-        authService.currentPruufUser?.id
-    }
-
-    // MARK: - Initialization
-
-    init(
-        authService: AuthService,
-        database: PostgrestClient? = nil
-    ) {
-        self.authService = authService
-        self.database = database ?? SupabaseConfig.client.schema("public")
-    }
-
-    // MARK: - Data Loading
-
-    /// Load badge counts for both tabs
-    func loadBadgeCounts() async {
-        guard let userId = userId else { return }
-
-        do {
-            async let senderBadge = loadSenderPendingCount(userId: userId)
-            async let receiverBadge = loadReceiverAlertCount(userId: userId)
-
-            let (senderCount, receiverCount) = try await (senderBadge, receiverBadge)
-
-            senderPendingCount = senderCount
-            receiverAlertCount = receiverCount
-        } catch {
-            // Silently handle errors for badge counts
-            print("Failed to load badge counts: \(error)")
-        }
-    }
-
-    /// Load sender pending count (1 if today's ping not sent)
-    private func loadSenderPendingCount(userId: UUID) async throws -> Int {
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: Date())
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
-
-        let formatter = ISO8601DateFormatter()
-
-        // Check if there's a completed ping for today
-        let pings: [Ping] = try await database
-            .from("pings")
-            .select("id, status")
-            .eq("sender_id", value: userId.uuidString)
-            .gte("scheduled_time", value: formatter.string(from: startOfDay))
-            .lt("scheduled_time", value: formatter.string(from: endOfDay))
-            .eq("status", value: PingStatus.completed.rawValue)
-            .limit(1)
-            .execute()
-            .value
-
-        // If no completed ping, check if sender is on break
-        if pings.isEmpty {
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd"
-            let todayString = dateFormatter.string(from: startOfDay)
-
-            let breaks: [Break] = try await database
-                .from("breaks")
-                .select("id")
-                .eq("sender_id", value: userId.uuidString)
-                .lte("start_date", value: todayString)
-                .gte("end_date", value: todayString)
-                .in("status", values: [BreakStatus.scheduled.rawValue, BreakStatus.active.rawValue])
-                .limit(1)
-                .execute()
-                .value
-
-            // If on break, no badge needed
-            if !breaks.isEmpty {
-                return 0
-            }
-
-            // Not completed and not on break = pending action needed
-            return 1
-        }
-
-        return 0
-    }
-
-    /// Load receiver alert count (number of missed pings from senders today)
-    private func loadReceiverAlertCount(userId: UUID) async throws -> Int {
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: Date())
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
-
-        let formatter = ISO8601DateFormatter()
-
-        // Get all active connections where user is receiver
-        let connections: [Connection] = try await database
-            .from("connections")
-            .select("sender_id")
-            .eq("receiver_id", value: userId.uuidString)
-            .eq("status", value: ConnectionStatus.active.rawValue)
-            .execute()
-            .value
-
-        guard !connections.isEmpty else { return 0 }
-
-        let senderIds = connections.map { $0.senderId.uuidString }
-
-        // Count missed pings from connected senders today
-        let missedPings: [Ping] = try await database
-            .from("pings")
-            .select("id")
-            .in("sender_id", values: senderIds)
-            .gte("scheduled_time", value: formatter.string(from: startOfDay))
-            .lt("scheduled_time", value: formatter.string(from: endOfDay))
-            .eq("status", value: PingStatus.missed.rawValue)
-            .execute()
-            .value
-
-        return missedPings.count
-    }
-
-    // MARK: - Subscription Logic
-
-    /// Check if subscription is required to access receiver dashboard
-    func checkSubscriptionRequirement() {
-        guard let userId = userId else { return }
-
-        Task {
-            do {
-                // Check if user has any receiver connections
-                let connections: [Connection] = try await database
-                    .from("connections")
-                    .select("id")
-                    .eq("receiver_id", value: userId.uuidString)
-                    .neq("status", value: ConnectionStatus.deleted.rawValue)
-                    .limit(1)
-                    .execute()
-                    .value
-
-                // If user has receiver connections, check subscription status
-                if !connections.isEmpty {
-                    let profiles: [ReceiverProfile] = try await database
-                        .from("receiver_profiles")
-                        .select()
-                        .eq("user_id", value: userId.uuidString)
-                        .limit(1)
-                        .execute()
-                        .value
-
-                    if let profile = profiles.first {
-                        // Check subscription status
-                        let hasValidSubscription = profile.subscriptionStatus == .active ||
-                            profile.subscriptionStatus == .trial
-
-                        if !hasValidSubscription {
-                            showSubscriptionAlert = true
-                        }
-                    } else {
-                        // No receiver profile = no trial started
-                        showSubscriptionAlert = true
-                    }
-                }
-                // If no receiver connections, no subscription required (free to browse empty dashboard)
-            } catch {
-                print("Failed to check subscription: \(error)")
-            }
-        }
+        // Simplified to single view - only showing sender dashboard
+        // Receiver features accessible via separate tab or navigation if needed
+        SenderDashboardView(authService: authService)
     }
 }
 
@@ -418,8 +87,8 @@ struct SubscriptionRequiredSheet: View {
                 // Benefits
                 VStack(alignment: .leading, spacing: 12) {
                     benefitRow(icon: "person.2.fill", text: "Unlimited sender connections")
-                    benefitRow(icon: "bell.fill", text: "Real-time ping notifications")
-                    benefitRow(icon: "exclamationmark.triangle.fill", text: "Missed ping alerts")
+                    benefitRow(icon: "bell.fill", text: "Real-time Pruuf notifications")
+                    benefitRow(icon: "exclamationmark.triangle.fill", text: "Missed Pruuf alerts")
                     benefitRow(icon: "shield.fill", text: "Peace of mind 24/7")
                 }
                 .padding(.horizontal, 32)
@@ -528,7 +197,7 @@ struct MainTabView: View {
             ConnectionsPlaceholderView()
                 .tabItem {
                     Image(systemName: "person.2.fill")
-                    Text("Connections")
+                    Text("Receivers")
                 }
                 .tag(1)
 
@@ -552,7 +221,7 @@ struct MainTabView: View {
                let userId = authService.currentPruufUser?.id {
                 PingHistoryView(
                     connectionId: connectionId,
-                    displayName: "Ping History",
+                    displayName: "Pruuf History",
                     userId: userId
                 )
             }
@@ -637,7 +306,7 @@ struct SenderActivitySheetView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                Text("View detailed ping history and status for this sender.")
+                Text("View detailed Pruuf history and status for this sender.")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -693,27 +362,508 @@ struct PendingConnectionsSheetView: View {
     }
 }
 
-// MARK: - Tab Placeholder Views
+// MARK: - Receivers Tab View
 
+/// Receivers tab view showing list of all receivers with status badges
+/// Requirement 8: Connections/Receivers Page Redesign
 struct ConnectionsPlaceholderView: View {
+    @EnvironmentObject private var authService: AuthService
+    @StateObject private var connectionService = ConnectionService.shared
+    @State private var showAddReceiver = false
+    @State private var showManageSheet = false
+    @State private var selectedConnection: Connection?
+    @State private var isLoading = true
+    @State private var errorMessage: String?
+
+    // Requirement 9: Collapsible Connection ID
+    @State private var senderInvitationCode: String?
+    @State private var isConnectionIdExpanded = false
+    @State private var showCodeCopied = false
+
+    // Requirement 3: Nudge/Reminder functionality
+    @State private var showNudgeSMSComposer = false
+    @State private var pendingNudgeConnection: Connection?
+
     var body: some View {
         NavigationView {
-            VStack(spacing: 16) {
-                Image(systemName: "person.2.fill")
-                    .font(.system(size: 60))
-                    .foregroundColor(.blue)
-
-                Text("Connections")
-                    .font(.title2)
-                    .fontWeight(.bold)
-
-                Text("Manage your connections here")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+            Group {
+                if isLoading && connectionService.connections.isEmpty {
+                    ProgressView("Loading receivers...")
+                } else if connectionService.connections.isEmpty {
+                    emptyStateView
+                } else {
+                    receiversListView
+                }
             }
-            .navigationTitle("Connections")
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Receivers")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showAddReceiver = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
         }
         .navigationViewStyle(.stack)
+        .task {
+            await loadReceivers()
+            await loadSenderInvitationCode()
+        }
+        .sheet(isPresented: $showAddReceiver) {
+            AddConnectionView(authService: authService)
+        }
+        .onChange(of: showAddReceiver) { isShowing in
+            if !isShowing {
+                Task {
+                    await loadReceivers()
+                }
+            }
+        }
+        .sheet(isPresented: $showManageSheet) {
+            if let connection = selectedConnection {
+                SenderConnectionActionsSheet(
+                    connection: connection,
+                    authService: authService,
+                    onPause: {
+                        await pauseConnection(connection.id)
+                    },
+                    onResume: {
+                        await resumeConnection(connection.id)
+                    },
+                    onRemove: {
+                        await removeConnection(connection.id)
+                    },
+                    onViewHistory: {
+                        // History handled in sheet
+                    }
+                )
+            }
+        }
+        .alert("Error", isPresented: .init(
+            get: { errorMessage != nil },
+            set: { if !$0 { errorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            if let error = errorMessage {
+                Text(error)
+            }
+        }
+        // Requirement 3: SMS Composer for Nudge
+        .sheet(isPresented: $showNudgeSMSComposer) {
+            if let connection = pendingNudgeConnection,
+               let phoneNumber = connection.receiver?.phoneNumber,
+               SMSComposerView.canSendText {
+                SMSComposerView(
+                    isPresented: $showNudgeSMSComposer,
+                    recipients: [phoneNumber],
+                    messageBody: generateNudgeMessage(for: connection),
+                    onComplete: { success in
+                        if success {
+                            errorMessage = "Reminder sent to \(connection.receiver?.displayName ?? "receiver")"
+                        }
+                        pendingNudgeConnection = nil
+                    }
+                )
+            }
+        }
+    }
+
+    // MARK: - Empty State
+
+    private var emptyStateView: some View {
+        VStack(spacing: 20) {
+            Spacer()
+
+            Image(systemName: "person.2.slash")
+                .font(.system(size: 60))
+                .foregroundColor(.secondary)
+
+            Text("No Receivers")
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Text("Add receivers to send them your daily Pruuf.\nThey'll be notified when you check in.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+
+            Button {
+                showAddReceiver = true
+            } label: {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Add Receiver")
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 14)
+                .background(Color.blue)
+                .cornerRadius(12)
+            }
+            .padding(.top, 8)
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Receivers List
+
+    private var receiversListView: some View {
+        VStack(spacing: 0) {
+            List {
+                // Receivers section
+                ForEach(connectionService.connections) { connection in
+                    ReceiverListRowView(
+                        connection: connection,
+                        onSendReminder: connection.status == .pending ? {
+                            sendReminder(for: connection)
+                        } : nil
+                    )
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedConnection = connection
+                            showManageSheet = true
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                Task {
+                                    await removeConnection(connection.id)
+                                }
+                            } label: {
+                                Label("Remove", systemImage: "trash")
+                            }
+                        }
+                }
+
+                // Requirement 9: Collapsible "My Connection ID" section
+                if senderInvitationCode != nil {
+                    Section {
+                        connectionIdSection
+                    }
+                }
+            }
+            .listStyle(.insetGrouped)
+            .refreshable {
+                await loadReceivers()
+            }
+
+            // Add Receiver Button at bottom
+            addReceiverFooter
+        }
+        .overlay(
+            // Toast for copied confirmation
+            Group {
+                if showCodeCopied {
+                    VStack {
+                        Spacer()
+                        Text("Code copied!")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(Color.black.opacity(0.8))
+                            .cornerRadius(8)
+                            .padding(.bottom, 100)
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                }
+            }
+            .animation(.easeInOut(duration: 0.3), value: showCodeCopied)
+        )
+    }
+
+    // MARK: - Connection ID Section (Requirement 9)
+
+    private var connectionIdSection: some View {
+        DisclosureGroup(
+            isExpanded: $isConnectionIdExpanded,
+            content: {
+                VStack(alignment: .leading, spacing: 12) {
+                    // Code display
+                    if let code = senderInvitationCode {
+                        HStack {
+                            Text(code)
+                                .font(.system(size: 32, weight: .bold, design: .monospaced))
+                                .foregroundColor(.primary)
+                                .tracking(4)
+
+                            Spacer()
+
+                            Button {
+                                UIPasteboard.general.string = code
+                                showCodeCopied = true
+                                let generator = UINotificationFeedbackGenerator()
+                                generator.notificationOccurred(.success)
+
+                                // Hide toast after 2 seconds
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    showCodeCopied = false
+                                }
+                            } label: {
+                                Image(systemName: "doc.on.doc")
+                                    .font(.title3)
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                        .padding(.vertical, 8)
+                    }
+
+                    // Explanatory text
+                    Text("Share this code with people who want to receive your daily Pruuf. They'll enter it in their app to connect with you.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.vertical, 4)
+            },
+            label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "qrcode")
+                        .font(.title3)
+                        .foregroundColor(.purple)
+
+                    Text("My Connection ID")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundColor(.primary)
+                }
+            }
+        )
+        .tint(.purple)
+    }
+
+    // MARK: - Add Receiver Footer
+
+    private var addReceiverFooter: some View {
+        Button {
+            showAddReceiver = true
+        } label: {
+            HStack {
+                Image(systemName: "plus.circle.fill")
+                    .font(.title3)
+                Text("Add Receiver")
+                    .font(.subheadline.weight(.medium))
+            }
+            .foregroundColor(.blue)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Color(.systemBackground))
+        }
+        .overlay(
+            Rectangle()
+                .frame(height: 0.5)
+                .foregroundColor(Color(.separator)),
+            alignment: .top
+        )
+    }
+
+    // MARK: - Data Loading
+
+    private func loadReceivers() async {
+        guard let userId = authService.currentPruufUser?.id else { return }
+
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            try await connectionService.fetchConnectionsAsSender(userId: userId)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    /// Load the sender's invitation code from sender_profiles table
+    private func loadSenderInvitationCode() async {
+        guard let userId = authService.currentPruufUser?.id else { return }
+
+        struct SenderProfileCode: Codable {
+            let invitationCode: String?
+
+            enum CodingKeys: String, CodingKey {
+                case invitationCode = "invitation_code"
+            }
+        }
+
+        do {
+            let profiles: [SenderProfileCode] = try await SupabaseConfig.client.schema("public")
+                .from("sender_profiles")
+                .select("invitation_code")
+                .eq("user_id", value: userId.uuidString)
+                .execute()
+                .value
+
+            if let profile = profiles.first, let code = profile.invitationCode {
+                senderInvitationCode = code
+            }
+        } catch {
+            // Silently fail - code will just not be displayed
+            print("Failed to load sender invitation code: \(error)")
+        }
+    }
+
+    // MARK: - Connection Actions
+
+    private func pauseConnection(_ connectionId: UUID) async {
+        do {
+            _ = try await connectionService.pauseConnection(connectionId: connectionId)
+            await loadReceivers()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func resumeConnection(_ connectionId: UUID) async {
+        do {
+            _ = try await connectionService.resumeConnection(connectionId: connectionId)
+            await loadReceivers()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func removeConnection(_ connectionId: UUID) async {
+        do {
+            try await connectionService.deleteConnection(connectionId: connectionId)
+            await loadReceivers()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func sendReminder(for connection: Connection) {
+        // Requirement 3: Trigger SMS composer for nudge
+        guard let phoneNumber = connection.receiver?.phoneNumber, !phoneNumber.isEmpty else {
+            errorMessage = "No phone number available for this receiver"
+            return
+        }
+
+        // Check if SMS is available
+        if SMSComposerView.canSendText {
+            pendingNudgeConnection = connection
+            showNudgeSMSComposer = true
+        } else {
+            errorMessage = "SMS is not available on this device"
+        }
+    }
+
+    /// Generate the nudge message for a connection
+    private func generateNudgeMessage(for connection: Connection) -> String {
+        let senderName = authService.currentPruufUser?.displayName ?? "Someone"
+        let code = senderInvitationCode ?? "------"
+        return InvitationService.shared.generateNudgeMessage(senderName: senderName, code: code)
+    }
+}
+
+// MARK: - Receiver List Row View
+
+/// Row view for the receivers list with status badge
+struct ReceiverListRowView: View {
+    let connection: Connection
+    var onSendReminder: (() -> Void)? = nil
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // Avatar circle with initials
+            Circle()
+                .fill(statusColor.opacity(0.2))
+                .frame(width: 44, height: 44)
+                .overlay(
+                    Text(initials)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(statusColor)
+                )
+
+            // Name and status
+            VStack(alignment: .leading, spacing: 4) {
+                Text(displayName)
+                    .font(.body)
+                    .fontWeight(.medium)
+                    .foregroundColor(.primary)
+
+                // Status badge
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(statusColor)
+                        .frame(width: 8, height: 8)
+
+                    Text(statusText)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            Spacer()
+
+            // Reminder button for pending connections
+            if connection.status == .pending, let onSendReminder = onSendReminder {
+                Button {
+                    onSendReminder()
+                } label: {
+                    Text("Remind")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.orange)
+                        .cornerRadius(12)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+
+            // Chevron indicator
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .padding(.vertical, 4)
+    }
+
+    // MARK: - Computed Properties
+
+    private var displayName: String {
+        connection.receiver?.displayName ?? connection.receiver?.phoneNumber ?? "Unknown"
+    }
+
+    private var initials: String {
+        if let name = connection.receiver?.displayName, !name.isEmpty {
+            let words = name.split(separator: " ")
+            let initials = words.prefix(2).compactMap { $0.first?.uppercased() }
+            return initials.joined()
+        }
+        return "?"
+    }
+
+    private var statusColor: Color {
+        switch connection.status {
+        case .active:
+            return .green
+        case .paused:
+            return .gray
+        case .pending:
+            return .orange
+        case .deleted:
+            return .red
+        }
+    }
+
+    private var statusText: String {
+        switch connection.status {
+        case .active:
+            return "Active"
+        case .paused:
+            return "Paused"
+        case .pending:
+            return "Pending"
+        case .deleted:
+            return "Removed"
+        }
     }
 }
 

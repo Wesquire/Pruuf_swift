@@ -479,15 +479,15 @@ enum PingServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .pingNotFound:
-            return "Ping not found"
+            return "Pruuf not found"
         case .pingAlreadyConfirmed:
-            return "This ping has already been confirmed"
+            return "This Pruuf has already been confirmed"
         case .pingExpired:
-            return "This ping has expired and can no longer be confirmed"
+            return "This Pruuf has expired and can no longer be confirmed"
         case .confirmationFailed(let message):
-            return "Failed to confirm ping: \(message)"
+            return "Failed to confirm Pruuf: \(message)"
         case .noPendingPings:
-            return "No pending pings to complete"
+            return "No pending Pruufs to complete"
         case .locationRequired:
             return "Location is required for in-person verification"
         case .locationPermissionDenied:
@@ -561,7 +561,7 @@ struct PingCompletionResult {
     /// User-friendly completion message
     var completionMessage: String {
         if completedCount == 0 {
-            return "No pings to complete"
+            return "No Pruufs to complete"
         }
 
         var message = "You're all checked in!"
@@ -625,13 +625,13 @@ struct TodaysPingStatus {
         if allCompleted {
             return "All checked in!"
         } else if isLate {
-            return "Ping overdue - tap now"
+            return "Pruuf overdue - tap now"
         } else if hasPendingPings {
             return "Waiting for check-in"
         } else if onBreakCount > 0 {
-            return "On break"
+            return "On Pruuf Pause"
         } else {
-            return "No pings today"
+            return "No Pruufs today"
         }
     }
 
@@ -640,7 +640,7 @@ struct TodaysPingStatus {
         if allCompleted {
             return "Completed"
         } else if isLate {
-            return "Ping Now"
+            return "Send Pruuf Now"
         } else if hasPendingPings {
             return "I'm Okay"
         } else {

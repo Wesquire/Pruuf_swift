@@ -1,6 +1,7 @@
 import SwiftUI
 import ContactsUI
 import MessageUI
+import UIKit
 
 // MARK: - Sender Onboarding Views
 // Section 3.3: Sender Onboarding Flow
@@ -14,6 +15,26 @@ enum SenderOnboardingViews {
     // - SenderNotificationPermissionView
     // - SenderOnboardingCompleteView
     // - SenderOnboardingCoordinatorView
+}
+
+// MARK: - Onboarding Back Button
+
+/// Reusable back button component for onboarding screens
+struct OnboardingBackButton: View {
+    let action: () -> Void
+    var tintColor: Color = .blue
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: "chevron.left")
+                    .font(.body.weight(.semibold))
+                Text("Back")
+                    .font(.body)
+            }
+            .foregroundStyle(tintColor)
+        }
+    }
 }
 
 // MARK: - Sender Onboarding Step
@@ -59,26 +80,26 @@ extension TutorialSlide {
     static let senderSlides: [TutorialSlide] = [
         TutorialSlide(
             iconName: "clock.fill",
-            title: "Set your daily ping time",
+            title: "Set your Daily Pruuf time",
             description: "Choose a time each day when you'll check in. We'll remind you when it's time.",
             iconColor: .blue
         ),
         TutorialSlide(
             iconName: "hand.tap.fill",
             title: "Tap once to confirm you're okay",
-            description: "It only takes a second. Just tap the big button to let everyone know you're safe.",
+            description: "It only takes a second. Just tap the check-in button to let your contacts know you're okay.",
             iconColor: .green
         ),
         TutorialSlide(
             iconName: "person.2.fill",
             title: "Connect with people who care",
-            description: "Invite friends and family to receive your pings. They'll get peace of mind knowing you're okay.",
+            description: "Invite friends and family to receive your Pruufs. They'll get peace of mind knowing you're okay.",
             iconColor: .purple
         ),
         TutorialSlide(
             iconName: "calendar.badge.clock",
             title: "Take breaks when needed",
-            description: "Going on vacation? Pause your pings anytime. Your connections will be notified.",
+            description: "Going on vacation? Pause your Pruufs anytime. Your connections will be notified.",
             iconColor: .orange
         )
     ]
@@ -100,16 +121,24 @@ struct SenderTutorialView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Skip Button (top right)
+            // Skip Button (top right) - Made larger and more prominent
             HStack {
                 Spacer()
-                Button("Skip") {
+                Button {
                     onSkip()
+                } label: {
+                    Text("Skip")
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(.blue)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.blue.opacity(0.1))
+                        )
                 }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
                 .padding(.trailing, 20)
-                .padding(.top, 10)
+                .padding(.top, 16)
             }
 
             // Title
@@ -212,10 +241,13 @@ struct PingTimeSelectionView: View {
     /// Callback when time is selected and user continues
     var onContinue: (Date) -> Void
 
-    /// Grace period in minutes (default 90)
-    private let gracePeriodMinutes = 90
+    /// Callback when user taps back button
+    var onBack: (() -> Void)?
 
-    init(defaultTime: Date? = nil, onContinue: @escaping (Date) -> Void) {
+    /// Grace period in minutes (fixed at 60)
+    private let gracePeriodMinutes = 60
+
+    init(defaultTime: Date? = nil, onContinue: @escaping (Date) -> Void, onBack: (() -> Void)? = nil) {
         // Default to 9:00 AM in user's local time
         let calendar = Calendar.current
         let now = Date()
@@ -232,6 +264,7 @@ struct PingTimeSelectionView: View {
         }
 
         self.onContinue = onContinue
+        self.onBack = onBack
     }
 
     /// Calculate deadline based on selected time + grace period
@@ -257,11 +290,11 @@ struct PingTimeSelectionView: View {
         VStack(spacing: 24) {
             // Title
             VStack(spacing: 12) {
-                Text("When should we remind you to ping?")
+                Text("When should we remind you to send your Pruuf?")
                     .font(.title2.bold())
                     .multilineTextAlignment(.center)
 
-                Text("Choose a time you'll be awake every day")
+                Text("Choose a time each day when you'll send your Pruuf. Log in before this time to notify your loved ones that you're okay. They'll receive a notification when you ping—and another if you haven't pinged by your Daily Ping Time.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -272,14 +305,17 @@ struct PingTimeSelectionView: View {
             Spacer()
 
             // Time Picker (iOS native wheel picker)
+            // Wrapped in a container with clipped bounds to prevent tap area overflow
             DatePicker(
-                "Ping Time",
+                "Pruuf Time",
                 selection: $selectedTime,
                 displayedComponents: .hourAndMinute
             )
             .datePickerStyle(.wheel)
             .labelsHidden()
-            .frame(maxHeight: 200)
+            .frame(height: 200)
+            .clipped()
+            .compositingGroup()
 
             // Grace Period Explanation
             VStack(spacing: 8) {
@@ -327,12 +363,21 @@ struct PingTimeSelectionView: View {
                 .background(Color.blue)
                 .foregroundStyle(.white)
                 .cornerRadius(12)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .disabled(isProcessing)
             .padding(.horizontal, 20)
             .padding(.bottom, 40)
         }
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if let onBack = onBack {
+                    OnboardingBackButton(action: onBack)
+                }
+            }
+        }
     }
 }
 
@@ -349,122 +394,241 @@ struct ConnectionInvitationView: View {
     /// Callback when user skips
     var onSkip: () -> Void
 
+    /// Callback when user taps back button
+    var onBack: (() -> Void)?
+
     var body: some View {
-        VStack(spacing: 24) {
-            // Title
-            VStack(spacing: 12) {
-                Text("Invite people to receive your pings")
-                    .font(.title2.bold())
-                    .multilineTextAlignment(.center)
+        ScrollView {
+            VStack(spacing: 24) {
+                // Title
+                VStack(spacing: 12) {
+                    Text("Connect with people who care")
+                        .font(.title2.bold())
+                        .multilineTextAlignment(.center)
 
-                Text("They'll get peace of mind knowing you're safe")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(.top, 40)
-            .padding(.horizontal, 20)
-
-            Spacer()
-
-            // Selected Contacts List
-            if !viewModel.selectedContacts.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Selected (\(viewModel.selectedContacts.count))")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 20)
-
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(viewModel.selectedContacts) { contact in
-                                SelectedContactChip(
-                                    contact: contact,
-                                    onRemove: {
-                                        viewModel.removeContact(contact)
-                                    }
-                                )
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                }
-                .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-
-            // Select Contacts Button
-            Button {
-                viewModel.showingContactPicker = true
-            } label: {
-                HStack {
-                    Image(systemName: "person.crop.circle.badge.plus")
-                        .font(.title3)
-                    Text("Select Contacts")
-                        .fontWeight(.medium)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.blue, lineWidth: 2)
-                )
-                .foregroundStyle(.blue)
-            }
-            .padding(.horizontal, 20)
-
-            Spacer()
-
-            // Error Message
-            if let error = viewModel.errorMessage {
-                Text(error)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 20)
-            }
-
-            // Buttons
-            VStack(spacing: 12) {
-                // Skip for Now
-                Button {
-                    onSkip()
-                } label: {
-                    Text("Skip for Now")
+                    Text("Invite friends and family to receive your Pruuf. They'll get peace of mind knowing you're okay.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                 }
+                .padding(.top, 40)
+                .padding(.horizontal, 20)
 
-                // Continue Button
-                Button {
-                    Task {
-                        await viewModel.sendInvitations()
-                        onContinue(viewModel.invitationsSent)
+                // Your Unique Code Section
+                VStack(spacing: 16) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "qrcode")
+                            .foregroundStyle(.blue)
+                        Text("Your Sender Code")
+                            .font(.subheadline.bold())
                     }
-                } label: {
-                    HStack {
-                        if viewModel.isProcessing {
-                            ProgressView()
-                                .progressViewStyle(.circular)
-                                .tint(.white)
-                        } else {
-                            Text(viewModel.selectedContacts.isEmpty ? "Continue" : "Send Invitations")
-                                .fontWeight(.semibold)
+
+                    if viewModel.isLoadingCode {
+                        ProgressView()
+                            .frame(height: 50)
+                    } else if let code = viewModel.senderUniqueCode {
+                        // Code display
+                        HStack(spacing: 8) {
+                            ForEach(Array(code.enumerated()), id: \.offset) { _, digit in
+                                Text(String(digit))
+                                    .font(.system(size: 24, weight: .bold, design: .monospaced))
+                                    .frame(width: 36, height: 44)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(Color(.systemGray6))
+                                    )
+                            }
+                        }
+
+                        // Copy and Share buttons
+                        HStack(spacing: 12) {
+                            Button {
+                                viewModel.copyCode()
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "doc.on.doc")
+                                    Text("Copy")
+                                }
+                                .font(.caption.bold())
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Capsule().fill(Color.blue.opacity(0.15)))
+                                .foregroundStyle(.blue)
+                            }
+
+                            Button {
+                                viewModel.shareCode()
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "square.and.arrow.up")
+                                    Text("Share")
+                                }
+                                .font(.caption.bold())
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Capsule().fill(Color.green.opacity(0.15)))
+                                .foregroundStyle(.green)
+                            }
+                        }
+
+                        Text("Share this code with people who want to receive your Pruufs")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemGray6))
+                )
+                .padding(.horizontal, 20)
+
+                // Divider with "OR"
+                HStack {
+                    Rectangle()
+                        .fill(Color(.systemGray4))
+                        .frame(height: 1)
+                    Text("OR")
+                        .font(.caption.bold())
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                    Rectangle()
+                        .fill(Color(.systemGray4))
+                        .frame(height: 1)
+                }
+                .padding(.horizontal, 40)
+
+                // Selected Contacts List
+                if !viewModel.selectedContacts.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Selected (\(viewModel.selectedContacts.count))")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 20)
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(viewModel.selectedContacts) { contact in
+                                    SelectedContactChip(
+                                        contact: contact,
+                                        onRemove: {
+                                            viewModel.removeContact(contact)
+                                        }
+                                    )
+                                }
+                            }
+                            .padding(.horizontal, 20)
                         }
                     }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(Color.blue)
-                    .foregroundStyle(.white)
-                    .cornerRadius(12)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
-                .disabled(viewModel.isProcessing)
+
+                // Action Buttons
+                VStack(spacing: 12) {
+                    // Select from Contacts
+                    Button {
+                        viewModel.showingContactPicker = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "person.crop.circle.badge.plus")
+                                .font(.title3)
+                            Text("Select from Contacts")
+                                .fontWeight(.medium)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.blue, lineWidth: 2)
+                        )
+                        .foregroundStyle(.blue)
+                    }
+
+                    // Add Phone Manually
+                    Button {
+                        viewModel.showingManualEntry = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "phone.badge.plus")
+                                .font(.title3)
+                            Text("Enter Phone Number")
+                                .fontWeight(.medium)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(.systemGray4), lineWidth: 1)
+                        )
+                        .foregroundStyle(.primary)
+                    }
+                }
+                .padding(.horizontal, 20)
+
+                // Error Message
+                if let error = viewModel.errorMessage {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 20)
+                }
+
+                Spacer(minLength: 20)
+
+                // Buttons
+                VStack(spacing: 12) {
+                    // Skip for Now
+                    Button {
+                        onSkip()
+                    } label: {
+                        Text("Skip for Now")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    // Continue Button
+                    Button {
+                        Task {
+                            await viewModel.sendInvitations()
+                            onContinue(viewModel.invitationsSent)
+                        }
+                    } label: {
+                        HStack {
+                            if viewModel.isProcessing {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .tint(.white)
+                            } else {
+                                Text(viewModel.selectedContacts.isEmpty ? "Continue" : "Send Invitations")
+                                    .fontWeight(.semibold)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(Color.blue)
+                        .foregroundStyle(.white)
+                        .cornerRadius(12)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(viewModel.isProcessing)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 40)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 40)
         }
         .animation(.easeInOut, value: viewModel.selectedContacts.count)
         .sheet(isPresented: $viewModel.showingContactPicker) {
             ContactPickerView(selectedContacts: $viewModel.selectedContacts)
+        }
+        .sheet(isPresented: $viewModel.showingManualEntry) {
+            ManualPhoneEntryView(
+                onAdd: { name, phone in
+                    viewModel.addManualContact(name: name, phoneNumber: phone)
+                }
+            )
         }
         .sheet(isPresented: $viewModel.showingMessageCompose) {
             if let contact = viewModel.currentInviteContact {
@@ -477,10 +641,21 @@ struct ConnectionInvitationView: View {
                 )
             }
         }
-        .onAppear {
+        .alert("Copied!", isPresented: $viewModel.showCopiedAlert) {
+            Button("OK", role: .cancel) {}
+        }
+        .task {
+            await viewModel.generateSenderCode(for: authService.currentUser?.id)
             viewModel.senderName = authService.currentPruufUser?.displayName ?? "Someone"
         }
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if let onBack = onBack {
+                    OnboardingBackButton(action: onBack)
+                }
+            }
+        }
     }
 }
 
@@ -550,13 +725,102 @@ struct SelectedContact: Identifiable, Equatable {
 class ConnectionInvitationViewModel: ObservableObject {
     @Published var selectedContacts: [SelectedContact] = []
     @Published var showingContactPicker = false
+    @Published var showingManualEntry = false
     @Published var showingMessageCompose = false
     @Published var currentInviteContact: SelectedContact?
     @Published var isProcessing = false
+    @Published var isLoadingCode = false
     @Published var errorMessage: String?
     @Published var invitationsSent = 0
+    @Published var senderUniqueCode: String?
+    @Published var showCopiedAlert = false
 
     var senderName: String = "Someone"
+
+    private let database = SupabaseConfig.client.schema("public")
+
+    /// Fetch the sender's unique invitation code from their profile
+    func generateSenderCode(for userId: UUID?) async {
+        guard let userId = userId else { return }
+
+        isLoadingCode = true
+        defer { isLoadingCode = false }
+
+        do {
+            // Fetch the sender profile to get the invitation code
+            struct SenderProfileCode: Codable {
+                let invitationCode: String?
+
+                enum CodingKeys: String, CodingKey {
+                    case invitationCode = "invitation_code"
+                }
+            }
+
+            let profiles: [SenderProfileCode] = try await database
+                .from("sender_profiles")
+                .select("invitation_code")
+                .eq("user_id", value: userId.uuidString)
+                .execute()
+                .value
+
+            if let profile = profiles.first, let code = profile.invitationCode {
+                senderUniqueCode = code
+            } else {
+                // Profile exists but no code - this shouldn't happen with new profiles
+                // Generate a fallback for development/testing
+                print("Sender profile has no invitation code, using fallback")
+                senderUniqueCode = generateTemporaryInviteCode()
+            }
+        } catch {
+            // If fetch fails, use a fallback code
+            print("Failed to fetch sender code: \(error)")
+            senderUniqueCode = generateTemporaryInviteCode()
+        }
+    }
+
+    /// Copy the sender's unique code to clipboard
+    func copyCode() {
+        guard let code = senderUniqueCode else { return }
+        UIPasteboard.general.string = code
+        showCopiedAlert = true
+
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+    }
+
+    /// Share the sender's unique code
+    func shareCode() {
+        guard let code = senderUniqueCode else { return }
+        let shareText = "Connect with me on PRUUF! Use my sender code: \(code)\n\nDownload PRUUF: https://pruuf.app/join"
+
+        let activityController = UIActivityViewController(
+            activityItems: [shareText],
+            applicationActivities: nil
+        )
+
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootViewController = windowScene.windows.first?.rootViewController {
+            rootViewController.present(activityController, animated: true)
+        }
+    }
+
+    /// Add a contact manually by phone number
+    func addManualContact(name: String, phoneNumber: String) {
+        // Normalize phone number
+        let cleanPhone = phoneNumber.replacingOccurrences(of: "[^0-9+]", with: "", options: .regularExpression)
+
+        // Check if already selected
+        guard !selectedContacts.contains(where: { $0.phoneNumber == cleanPhone }) else {
+            errorMessage = "This phone number is already added"
+            return
+        }
+
+        selectedContacts.append(SelectedContact(
+            name: name.isEmpty ? "Contact" : name,
+            phoneNumber: cleanPhone,
+            invitationSent: false
+        ))
+    }
 
     /// Remove a contact from selection
     func removeContact(_ contact: SelectedContact) {
@@ -565,10 +829,8 @@ class ConnectionInvitationViewModel: ObservableObject {
 
     /// Generate invitation message
     func generateInvitationMessage() -> String {
-        // The invitation code would be generated by the backend
-        // For now, use a placeholder that will be replaced when the actual system is implemented
-        let inviteCode = generateTemporaryInviteCode()
-        return "\(senderName) wants to send you daily pings on PRUUF to let you know they're safe. Download the app and use code \(inviteCode) to connect: https://pruuf.app/join"
+        let code = senderUniqueCode ?? generateTemporaryInviteCode()
+        return "\(senderName) wants to send you daily Pruufs on PRUUF to let you know they're safe. Download the app and use code \(code) to connect: https://pruuf.app/join"
     }
 
     /// Generate a temporary 6-digit invite code
@@ -620,6 +882,110 @@ class ConnectionInvitationViewModel: ObservableObject {
         }
 
         currentInviteContact = nil
+    }
+}
+
+// MARK: - Manual Phone Entry View
+
+/// Sheet for manually entering a phone number
+struct ManualPhoneEntryView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var name: String = ""
+    @State private var phoneNumber: String = ""
+    @State private var countryCode: String = "+1"
+    @FocusState private var isPhoneFocused: Bool
+
+    let onAdd: (String, String) -> Void
+
+    private var isValidPhone: Bool {
+        let digitsOnly = phoneNumber.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+        return digitsOnly.count >= 10
+    }
+
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 24) {
+                // Name field
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Name (optional)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    TextField("Contact name", text: $name)
+                        .textContentType(.name)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
+                }
+
+                // Phone number field
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Phone Number")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    HStack(spacing: 12) {
+                        // Country code
+                        Menu {
+                            Button("+1 🇺🇸") { countryCode = "+1" }
+                            Button("+44 🇬🇧") { countryCode = "+44" }
+                            Button("+61 🇦🇺") { countryCode = "+61" }
+                            Button("+91 🇮🇳") { countryCode = "+91" }
+                        } label: {
+                            HStack {
+                                Text(countryCode)
+                                    .fontWeight(.medium)
+                                Image(systemName: "chevron.down")
+                                    .font(.caption)
+                            }
+                            .padding()
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                        }
+                        .foregroundStyle(.primary)
+
+                        TextField("Phone number", text: $phoneNumber)
+                            .keyboardType(.phonePad)
+                            .textContentType(.telephoneNumber)
+                            .focused($isPhoneFocused)
+                            .padding()
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                    }
+                }
+
+                Spacer()
+
+                // Add button
+                Button {
+                    let fullPhone = countryCode + phoneNumber.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+                    onAdd(name, fullPhone)
+                    dismiss()
+                } label: {
+                    Text("Add Contact")
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(isValidPhone ? Color.blue : Color.gray)
+                        .foregroundStyle(.white)
+                        .cornerRadius(12)
+                }
+                .disabled(!isValidPhone)
+            }
+            .padding(20)
+            .navigationTitle("Add Phone Number")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+            .onAppear {
+                isPhoneFocused = true
+            }
+        }
     }
 }
 
@@ -724,6 +1090,9 @@ struct SenderNotificationPermissionView: View {
     /// Callback when user continues
     var onContinue: (Bool) -> Void
 
+    /// Callback when user taps back button
+    var onBack: (() -> Void)?
+
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
@@ -745,7 +1114,7 @@ struct SenderNotificationPermissionView: View {
                 .multilineTextAlignment(.center)
 
             // Description
-            Text("Get reminders when it's time to ping")
+            Text("Get reminders when it's time to send your Pruuf")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -843,6 +1212,13 @@ struct SenderNotificationPermissionView: View {
             .padding(.bottom, 40)
         }
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if let onBack = onBack {
+                    OnboardingBackButton(action: onBack)
+                }
+            }
+        }
     }
 
     private func requestNotificationPermission() async {
@@ -924,7 +1300,7 @@ struct SenderOnboardingCompleteView: View {
                 SummaryRow(
                     icon: "clock.fill",
                     iconColor: .blue,
-                    title: "Daily ping time",
+                    title: "Daily Pruuf time",
                     value: formattedPingTime
                 )
 
@@ -1013,6 +1389,7 @@ struct SenderOnboardingCoordinatorView: View {
     @State private var selectedPingTime: Date = Date()
     @State private var connectionsInvited: Int = 0
     @State private var notificationsEnabled: Bool = false
+    @State private var hasInitialized: Bool = false
 
     /// Starting step (for resuming from saved progress)
     var startingStep: OnboardingStep = .senderTutorial
@@ -1030,13 +1407,16 @@ struct SenderOnboardingCoordinatorView: View {
                 )
 
             case .pingTime:
-                PingTimeSelectionView(onContinue: { time in
-                    selectedPingTime = time
-                    Task {
-                        await savePingTime(time)
-                    }
-                    moveToStep(.connections)
-                })
+                PingTimeSelectionView(
+                    onContinue: { time in
+                        selectedPingTime = time
+                        Task {
+                            await savePingTime(time)
+                        }
+                        moveToStep(.connections)
+                    },
+                    onBack: { moveToPreviousStep() }
+                )
 
             case .connections:
                 ConnectionInvitationView(
@@ -1047,14 +1427,18 @@ struct SenderOnboardingCoordinatorView: View {
                     onSkip: {
                         connectionsInvited = 0
                         moveToStep(.notifications)
-                    }
+                    },
+                    onBack: { moveToPreviousStep() }
                 )
 
             case .notifications:
-                SenderNotificationPermissionView(onContinue: { enabled in
-                    notificationsEnabled = enabled
-                    moveToStep(.complete)
-                })
+                SenderNotificationPermissionView(
+                    onContinue: { enabled in
+                        notificationsEnabled = enabled
+                        moveToStep(.complete)
+                    },
+                    onBack: { moveToPreviousStep() }
+                )
 
             case .complete:
                 SenderOnboardingCompleteView(
@@ -1070,6 +1454,9 @@ struct SenderOnboardingCoordinatorView: View {
             }
         }
         .onAppear {
+            // Only initialize once to prevent resetting step during SwiftUI view lifecycle
+            guard !hasInitialized else { return }
+            hasInitialized = true
             initializeStep()
         }
     }
@@ -1110,6 +1497,25 @@ struct SenderOnboardingCoordinatorView: View {
         // Save progress
         Task {
             await saveProgress(step.onboardingStep)
+        }
+    }
+
+    /// Move to the previous step
+    private func moveToPreviousStep() {
+        withAnimation {
+            switch currentStep {
+            case .tutorial:
+                // Can't go back from tutorial
+                break
+            case .pingTime:
+                currentStep = .tutorial
+            case .connections:
+                currentStep = .pingTime
+            case .notifications:
+                currentStep = .connections
+            case .complete:
+                currentStep = .notifications
+            }
         }
     }
 

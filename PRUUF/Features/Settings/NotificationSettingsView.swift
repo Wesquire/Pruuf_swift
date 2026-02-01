@@ -20,35 +20,30 @@ struct NotificationSettingsView: View {
 
     var body: some View {
         List {
-            // Master Toggle Section
-            masterToggleSection
-
-            // System Permission Status
-            systemPermissionSection
-
             // Sender Preferences (only shown for senders)
             if userIsSender {
                 senderPreferencesSection
             }
 
             // Receiver Preferences (only shown for receivers)
+            // Note: Hidden for sender-only users per Plan 4 Requirement 10
             if userIsReceiver {
                 receiverPreferencesSection
-            }
-
-            // Per-Sender Muting (only for receivers)
-            if userIsReceiver {
-                perSenderMutingSection
             }
 
             // Sound and Vibration (US-8.1)
             soundAndVibrationSection
 
-            // Quiet Hours (Future Feature)
-            quietHoursSection
-
             // Reset to Defaults
             resetSection
+
+            // Master Toggle Section - Moved to bottom per Plan 4 Requirement 10
+            masterToggleSection
+
+            // Note: Removed per Plan 4 Requirement 10:
+            // - systemPermissionSection
+            // - perSenderMutingSection
+            // - quietHoursSection
         }
         .navigationTitle("Notifications")
         .navigationBarTitleDisplayMode(.inline)
@@ -154,7 +149,7 @@ struct NotificationSettingsView: View {
                 }
             )) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Ping Reminders")
+                    Text("Pruuf Reminders")
                     Text("At your scheduled check-in time")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -180,7 +175,7 @@ struct NotificationSettingsView: View {
             }
             .disabled(!preferencesService.preferences.notificationsEnabled || preferencesService.isLoading)
 
-            // Deadline Warning
+            // Deadline Passed (renamed from "Deadline Warning" per Plan 4 Req 10)
             Toggle(isOn: Binding(
                 get: { preferencesService.preferences.deadlineWarning },
                 set: { newValue in
@@ -190,8 +185,8 @@ struct NotificationSettingsView: View {
                 }
             )) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Deadline Warning")
-                    Text("Final reminder at deadline")
+                    Text("Deadline Passed")
+                    Text("Alert after 60-minute grace period ends")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -218,7 +213,7 @@ struct NotificationSettingsView: View {
                 }
             )) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Ping Completed")
+                    Text("Pruuf Completed")
                     Text("When your connections check in")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -236,7 +231,7 @@ struct NotificationSettingsView: View {
                 }
             )) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Missed Ping Alerts")
+                    Text("Missed Pruuf Alerts")
                     Text("When a connection misses their check-in")
                         .font(.caption)
                         .foregroundColor(.secondary)

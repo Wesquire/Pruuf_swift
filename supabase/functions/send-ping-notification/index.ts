@@ -11,7 +11,7 @@ const corsHeaders = {
 };
 
 interface PingNotificationRequest {
-  type: "ping_completed" | "ping_completed_late" | "ping_missed" | "ping_reminder" | "connection_new" | "trial_ending" | "break_started" | "break_ended";
+  type: "ping_completed" | "ping_completed_late" | "ping_missed" | "ping_reminder" | "connection_new" | "trial_ending" | "break_started" | "break_ended" | "sender_ok_confirmation";
   sender_id: string;
   receiver_ids?: string[];
   ping_id?: string;
@@ -110,6 +110,8 @@ serve(async (req) => {
         case "break_started":
         case "break_ended":
           return "break_started";
+        case "sender_ok_confirmation":
+          return "ping_completed_ontime"; // Treat confirmatory pings same as completed for preference filtering
         default:
           return requestType;
       }
@@ -455,6 +457,24 @@ function buildNotificationContent(
         title: "Break Ended",
         body: `${senderName} ended their break early`,
         category: "BREAK_NOTIFICATION",
+        deeplink: "pruuf://dashboard",
+      };
+
+    case "sender_ok_confirmation":
+      // Confirmatory ping - sender tapped OK again (even after window closed or already completed)
+      const confirmTime = additionalData?.completed_at
+        ? new Date(additionalData.completed_at as string).toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit",
+          })
+        : new Date().toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit",
+          });
+      return {
+        title: `${senderName} is okay!`,
+        body: `Checked in at ${confirmTime} ✓`,
+        category: "PING_RECEIVED",
         deeplink: "pruuf://dashboard",
       };
 

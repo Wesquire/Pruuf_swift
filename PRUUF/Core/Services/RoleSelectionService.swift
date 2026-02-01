@@ -15,7 +15,11 @@ final class RoleSelectionService: ObservableObject {
 
     // MARK: - Private Properties
 
-    private let database: PostgrestClient
+    private var database: PostgrestClient {
+        SupabaseConfig.client.schema("public")
+    }
+
+    private let userService: UserService
 
     // MARK: - Constants
 
@@ -27,8 +31,8 @@ final class RoleSelectionService: ObservableObject {
 
     // MARK: - Initialization
 
-    init(database: PostgrestClient? = nil) {
-        self.database = database ?? SupabaseConfig.client.schema("public")
+    init(userService: UserService? = nil) {
+        self.userService = userService ?? UserService()
     }
 
     // MARK: - Role Selection
@@ -37,8 +41,9 @@ final class RoleSelectionService: ObservableObject {
     /// - Parameters:
     ///   - role: The selected role (sender or receiver)
     ///   - userId: The user's UUID
+    ///   - phoneNumber: The user's phone number (for user creation if needed)
     /// - Returns: The updated user after role selection
-    func selectRole(_ role: UserRole, for userId: UUID) async throws -> PruufUser {
+    func selectRole(_ role: UserRole, for userId: UUID, phoneNumber: String? = nil) async throws -> PruufUser {
         guard role == .sender || role == .receiver else {
             throw RoleSelectionError.invalidRole("Initial role must be sender or receiver")
         }
@@ -48,6 +53,11 @@ final class RoleSelectionService: ObservableObject {
         defer { isLoading = false }
 
         do {
+            // First, ensure the user exists in the users table
+            // This handles cases where user creation failed during authentication
+            let phone = phoneNumber ?? ""
+            _ = try await userService.fetchOrCreateUser(authId: userId, phoneNumber: phone)
+
             // Update user's primary role
             let updatedUser = try await updateUserPrimaryRole(userId: userId, role: role)
 
@@ -73,8 +83,9 @@ final class RoleSelectionService: ObservableObject {
     /// - Parameters:
     ///   - role: The role to add (sender or receiver)
     ///   - userId: The user's UUID
+    ///   - phoneNumber: The user's phone number (for user creation if needed)
     /// - Returns: The updated user with both roles
-    func addSecondRole(_ role: UserRole, for userId: UUID) async throws -> PruufUser {
+    func addSecondRole(_ role: UserRole, for userId: UUID, phoneNumber: String? = nil) async throws -> PruufUser {
         guard role == .sender || role == .receiver else {
             throw RoleSelectionError.invalidRole("Can only add sender or receiver role")
         }
@@ -84,6 +95,10 @@ final class RoleSelectionService: ObservableObject {
         defer { isLoading = false }
 
         do {
+            // First, ensure the user exists in the users table
+            let phone = phoneNumber ?? ""
+            _ = try await userService.fetchOrCreateUser(authId: userId, phoneNumber: phone)
+
             // Update user's primary role to 'both'
             let updatedUser = try await updateUserPrimaryRole(userId: userId, role: .both)
 
@@ -113,10 +128,15 @@ final class RoleSelectionService: ObservableObject {
     func createSenderProfile(for userId: UUID, pingTime: String? = nil) async throws -> SenderProfile {
         let time = pingTime ?? Self.defaultPingTime
 
+        // Generate a unique 6-digit invitation code
+        let invitationCode = try await generateUniqueInvitationCode()
+
         let request = NewSenderProfileRequest(
             userId: userId,
             pingTime: time,
-            pingEnabled: true
+            pingEnabled: true,
+            invitationCode: invitationCode,
+            isActive: true
         )
 
         do {
@@ -133,6 +153,44 @@ final class RoleSelectionService: ObservableObject {
         } catch {
             throw RoleSelectionError.profileCreationFailed("Failed to create sender profile: \(error.localizedDescription)")
         }
+    }
+
+    /// Generate a unique 6-digit invitation code
+    /// Checks database to ensure code is not already in use
+    private func generateUniqueInvitationCode() async throws -> String {
+        let maxAttempts = 10
+
+        for _ in 0..<maxAttempts {
+            let code = generateRandomCode()
+
+            // Check if code exists
+            struct CodeCheck: Codable {
+                let invitationCode: String?
+                enum CodingKeys: String, CodingKey {
+                    case invitationCode = "invitation_code"
+                }
+            }
+
+            let existingCodes: [CodeCheck] = try await database
+                .from("sender_profiles")
+                .select("invitation_code")
+                .eq("invitation_code", value: code)
+                .execute()
+                .value
+
+            if existingCodes.isEmpty {
+                return code
+            }
+        }
+
+        // Fallback: if all attempts fail, just return a random code
+        return generateRandomCode()
+    }
+
+    /// Generate a random 6-digit code
+    private func generateRandomCode() -> String {
+        let digits = "0123456789"
+        return String((0..<6).map { _ in digits.randomElement()! })
     }
 
     /// Create a receiver profile for the user with trial subscription

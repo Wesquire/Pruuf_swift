@@ -258,7 +258,7 @@ struct AddConnectionView: View {
                         .foregroundColor(.secondary)
                 }
 
-                Text("They will be notified that you're now sending them pings.")
+                Text("They will be notified that you're now sending them Pruufs.")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -517,8 +517,8 @@ class AddConnectionViewModel: ObservableObject {
         }
 
         // Only create ping if scheduled time is in the future (or within deadline window)
-        // Grace period is 90 minutes
-        let deadlineTime = scheduledTime.addingTimeInterval(90 * 60)
+        // Grace period is 60 minutes
+        let deadlineTime = scheduledTime.addingTimeInterval(60 * 60)
 
         // Only create if deadline is in the future
         guard deadlineTime > Date() else { return }
@@ -563,7 +563,7 @@ class AddConnectionViewModel: ObservableObject {
                 userId: receiverId.uuidString,
                 type: "connection_request",
                 title: "New Connection",
-                body: "\(senderName) is now sending you pings",
+                body: "\(senderName) is now sending you Pruufs",
                 sentAt: ISO8601DateFormatter().string(from: Date()),
                 deliveryStatus: "sent"
             )
@@ -680,7 +680,7 @@ struct ConnectToSenderView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
 
-                Text("If someone invited you to receive their pings, enter their code")
+                Text("If someone invited you to receive their Pruufs, enter their code")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -833,7 +833,7 @@ struct ConnectToSenderView: View {
                         .foregroundColor(.secondary)
                 }
 
-                Text("You'll receive their daily pings and know when they're okay.")
+                Text("You'll receive their daily Pruufs and know when they're okay.")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)

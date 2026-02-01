@@ -29,7 +29,7 @@ struct BreaksListView: View {
         NavigationView {
             ZStack {
                 if viewModel.isLoading && viewModel.allBreaks.isEmpty {
-                    ProgressView("Loading breaks...")
+                    ProgressView("Loading Pruuf Pauses...")
                 } else if viewModel.allBreaks.isEmpty {
                     emptyStateView
                 } else {
@@ -43,7 +43,7 @@ struct BreaksListView: View {
                 }
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Breaks")
+            .navigationTitle("Pruuf Pauses")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -140,7 +140,7 @@ struct BreaksListView: View {
                     Image(systemName: "calendar.badge.exclamationmark")
                         .font(.system(size: 40))
                         .foregroundColor(.secondary)
-                    Text("No \(selectedFilter == .all ? "" : selectedFilter.rawValue.lowercased()) breaks")
+                    Text("No \(selectedFilter == .all ? "" : selectedFilter.rawValue.lowercased()) Pruuf Pauses")
                         .font(.headline)
                         .foregroundColor(.secondary)
                     Spacer()
@@ -191,11 +191,11 @@ struct BreaksListView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.gray)
 
-            Text("No Breaks")
+            Text("No Pruuf Pauses")
                 .font(.title2)
                 .fontWeight(.bold)
 
-            Text("You haven't scheduled any breaks yet.\nBreaks let you pause ping requirements temporarily.")
+            Text("You haven't scheduled any Pruuf Pauses yet.\nPruuf Pauses let you pause Pruuf requirements temporarily.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -206,7 +206,7 @@ struct BreaksListView: View {
             } label: {
                 HStack {
                     Image(systemName: "plus.circle.fill")
-                    Text("Schedule a Break")
+                    Text("Schedule a Pruuf Pause")
                 }
                 .font(.headline)
                 .foregroundColor(.white)

@@ -113,7 +113,7 @@ struct SenderConnectionActionsSheet: View {
                         onViewHistory()
                     } label: {
                         Label {
-                            Text("View Ping History")
+                            Text("View Pruuf History")
                         } icon: {
                             Image(systemName: "clock.arrow.circlepath")
                                 .foregroundColor(.purple)
@@ -157,7 +157,7 @@ struct SenderConnectionActionsSheet: View {
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("Pausing will stop sending pings to \(receiverName). You can resume at any time.")
+            Text("Pausing will stop sending Pruufs to \(receiverName). You can resume at any time.")
         }
         .confirmationDialog("Remove Connection?", isPresented: $showRemoveConfirmation, titleVisibility: .visible) {
             Button("Remove", role: .destructive) {
@@ -170,7 +170,7 @@ struct SenderConnectionActionsSheet: View {
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("This will remove \(receiverName) from your receivers list. They will no longer receive your pings.")
+            Text("This will remove \(receiverName) from your receivers list. They will no longer receive your Pruufs.")
         }
         .sheet(isPresented: $showContactOptions) {
             ContactOptionsSheet(
@@ -323,7 +323,7 @@ struct ReceiverConnectionActionsSheet: View {
                         onViewHistory()
                     } label: {
                         Label {
-                            Text("View Ping History")
+                            Text("View Pruuf History")
                         } icon: {
                             Image(systemName: "clock.arrow.circlepath")
                                 .foregroundColor(.purple)
@@ -367,7 +367,7 @@ struct ReceiverConnectionActionsSheet: View {
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("You'll stop receiving notifications from \(sender.senderName). You can still see their pings in the app.")
+            Text("You'll stop receiving notifications from \(sender.senderName). You can still see their Pruufs in the app.")
         }
         .confirmationDialog("Remove Connection?", isPresented: $showRemoveConfirmation, titleVisibility: .visible) {
             Button("Remove", role: .destructive) {
@@ -380,7 +380,7 @@ struct ReceiverConnectionActionsSheet: View {
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("This will remove \(sender.senderName) from your senders list. You will no longer receive their pings.")
+            Text("This will remove \(sender.senderName) from your senders list. You will no longer receive their Pruufs.")
         }
         .sheet(isPresented: $showContactOptions) {
             ContactOptionsSheet(
@@ -556,11 +556,11 @@ struct PingHistoryView: View {
                             .font(.system(size: 48))
                             .foregroundColor(.secondary)
 
-                        Text("No ping history yet")
+                        Text("No Pruuf history yet")
                             .font(.headline)
                             .foregroundColor(.primary)
 
-                        Text("Pings will appear here once they start coming in.")
+                        Text("Pruufs will appear here once they start coming in.")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -656,13 +656,13 @@ struct PingHistoryRowView: View {
     private var statusText: String {
         switch ping.status {
         case .completed:
-            return "Ping completed"
+            return "Pruuf completed"
         case .missed:
-            return "Ping missed"
+            return "Pruuf missed"
         case .pending:
-            return "Ping pending"
+            return "Pruuf pending"
         case .onBreak:
-            return "On break"
+            return "On Pruuf Pause"
         }
     }
 

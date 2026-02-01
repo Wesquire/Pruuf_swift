@@ -448,7 +448,7 @@ struct ReceiverDashboardView: View {
                         .font(.headline)
                         .foregroundColor(.primary)
 
-                    Text("Your trial has ended. Subscribe to continue receiving pings.")
+                    Text("Your trial has ended. Subscribe to continue receiving Pruufs.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -485,7 +485,7 @@ struct ReceiverDashboardView: View {
                         .font(.headline)
                         .foregroundColor(.primary)
 
-                    Text("Resubscribe to continue receiving pings")
+                    Text("Resubscribe to continue receiving Pruufs")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }

@@ -22,7 +22,7 @@ struct ScheduleBreakView: View {
                     formContent
                 }
             }
-            .navigationTitle("Schedule Break")
+            .navigationTitle("Schedule Pruuf Pause")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -77,11 +77,11 @@ struct ScheduleBreakView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.purple)
 
-            Text("Take a Break")
+            Text("Take a Pruuf Pause")
                 .font(.title2)
                 .fontWeight(.bold)
 
-            Text("Schedule time off when you won't need to ping. Your receivers will be notified.")
+            Text("Schedule time off when you won't need to send a Pruuf. Your receivers will be notified.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -229,7 +229,7 @@ struct ScheduleBreakView: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
                     Image(systemName: "calendar.badge.plus")
-                    Text("Schedule Break")
+                    Text("Schedule Pruuf Pause")
                 }
             }
             .font(.headline)
@@ -254,7 +254,7 @@ struct ScheduleBreakView: View {
                 .font(.system(size: 72))
                 .foregroundColor(.green)
 
-            Text("Break Scheduled!")
+            Text("Pruuf Pause Scheduled!")
                 .font(.title)
                 .fontWeight(.bold)
 
@@ -272,8 +272,8 @@ struct ScheduleBreakView: View {
             // Info card
             VStack(alignment: .leading, spacing: 12) {
                 InfoRow(icon: "bell.fill", text: "Your receivers have been notified")
-                InfoRow(icon: "flame.fill", text: "Your streak will continue during this break")
-                InfoRow(icon: "hand.tap.fill", text: "You can still ping voluntarily if you want")
+                InfoRow(icon: "flame.fill", text: "Your streak will continue during this Pruuf Pause")
+                InfoRow(icon: "hand.tap.fill", text: "You can still send a Pruuf voluntarily if you want")
             }
             .padding(16)
             .background(Color(.systemBackground))

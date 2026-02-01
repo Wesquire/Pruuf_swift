@@ -50,19 +50,19 @@ extension TutorialSlide {
     static let receiverSlides: [TutorialSlide] = [
         TutorialSlide(
             iconName: "heart.fill",
-            title: "Get daily pings from loved ones",
+            title: "Get daily Pruufs from loved ones",
             description: "Receive a simple daily check-in from people you care about, letting you know they're safe.",
             iconColor: .pink
         ),
         TutorialSlide(
             iconName: "checkmark.shield.fill",
             title: "Know they're safe and sound",
-            description: "Each ping confirms your loved one is okay. Peace of mind, delivered daily.",
+            description: "Each Pruuf confirms your loved one is okay. Peace of mind, delivered daily.",
             iconColor: .green
         ),
         TutorialSlide(
             iconName: "exclamationmark.triangle.fill",
-            title: "Get notified if they miss a ping",
+            title: "Get notified if they miss a Pruuf",
             description: "If someone doesn't check in by their deadline, you'll receive an alert so you can reach out.",
             iconColor: .orange
         ),
@@ -91,16 +91,24 @@ struct ReceiverTutorialView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Skip Button (top right)
+            // Skip Button (top right) - Made larger and more prominent
             HStack {
                 Spacer()
-                Button("Skip") {
+                Button {
                     onSkip()
+                } label: {
+                    Text("Skip")
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(.pink)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.pink.opacity(0.1))
+                        )
                 }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
                 .padding(.trailing, 20)
-                .padding(.top, 10)
+                .padding(.top, 16)
             }
 
             // Title
@@ -170,6 +178,9 @@ struct UniqueCodeView: View {
 
     /// Callback when user continues
     var onContinue: (String) -> Void
+
+    /// Callback when user taps back button
+    var onBack: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 24) {
@@ -278,7 +289,7 @@ struct UniqueCodeView: View {
                         .font(.subheadline.bold())
                 }
 
-                Text("Senders will use this code to connect with you. Once connected, you'll receive their daily check-in pings.")
+                Text("Senders will use this code to connect with you. Once connected, you'll receive their daily Pruufs.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -320,6 +331,13 @@ struct UniqueCodeView: View {
             Text("Your code has been copied to the clipboard.")
         }
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if let onBack = onBack {
+                    OnboardingBackButton(action: onBack, tintColor: .pink)
+                }
+            }
+        }
     }
 
     // MARK: - Private Methods
@@ -406,6 +424,9 @@ struct SenderCodeEntryView: View {
 
     /// Callback when user skips
     var onSkip: () -> Void
+
+    /// Callback when user taps back button
+    var onBack: (() -> Void)?
 
     private let codeLength = 6
     private let database = SupabaseConfig.client.schema("public")
@@ -495,7 +516,7 @@ struct SenderCodeEntryView: View {
                         .font(.subheadline.bold())
                 }
 
-                Text("No worries! You can add senders later from the Connections tab. Just ask them for their 6-digit code when you're ready.")
+                Text("No worries! You can add senders later from the Receivers tab. Just ask them for their 6-digit code when you're ready.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -554,6 +575,13 @@ struct SenderCodeEntryView: View {
             isCodeFieldFocused = true
         }
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if let onBack = onBack {
+                    OnboardingBackButton(action: onBack, tintColor: .pink)
+                }
+            }
+        }
     }
 
     // MARK: - Private Methods
@@ -712,6 +740,9 @@ struct SubscriptionInfoView: View {
     /// Callback when user continues
     var onContinue: () -> Void
 
+    /// Callback when user taps back button
+    var onBack: (() -> Void)?
+
     /// Trial days remaining (default 15)
     private let trialDays = 15
 
@@ -754,7 +785,7 @@ struct SubscriptionInfoView: View {
 
                 SubscriptionBenefitRow(
                     icon: "bell.badge.fill",
-                    title: "Real-time ping notifications",
+                    title: "Real-time Pruuf notifications",
                     description: "Get notified instantly when senders check in"
                 )
 
@@ -821,6 +852,13 @@ struct SubscriptionInfoView: View {
             .padding(.bottom, 40)
         }
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if let onBack = onBack {
+                    OnboardingBackButton(action: onBack, tintColor: .pink)
+                }
+            }
+        }
     }
 }
 
@@ -861,6 +899,9 @@ struct ReceiverNotificationPermissionView: View {
     /// Callback when user continues
     var onContinue: (Bool) -> Void
 
+    /// Callback when user taps back button
+    var onBack: (() -> Void)?
+
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
@@ -877,12 +918,12 @@ struct ReceiverNotificationPermissionView: View {
             }
 
             // Title
-            Text("Never Miss a Ping")
+            Text("Never Miss a Pruuf")
                 .font(.title.bold())
                 .multilineTextAlignment(.center)
 
-            // Description (as per plan: "Get notified when senders ping you")
-            Text("Get notified when senders ping you")
+            // Description (as per plan: "Get notified when senders send you a Pruuf")
+            Text("Get notified when senders send you a Pruuf")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -892,12 +933,12 @@ struct ReceiverNotificationPermissionView: View {
             VStack(alignment: .leading, spacing: 16) {
                 ReceiverNotificationBenefitRow(
                     icon: "checkmark.circle.fill",
-                    text: "Instant ping confirmations",
+                    text: "Instant Pruuf confirmations",
                     color: .green
                 )
                 ReceiverNotificationBenefitRow(
                     icon: "exclamationmark.triangle.fill",
-                    text: "Missed ping alerts",
+                    text: "Missed Pruuf alerts",
                     color: .orange
                 )
                 ReceiverNotificationBenefitRow(
@@ -983,6 +1024,13 @@ struct ReceiverNotificationPermissionView: View {
             .padding(.bottom, 40)
         }
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if let onBack = onBack {
+                    OnboardingBackButton(action: onBack, tintColor: .pink)
+                }
+            }
+        }
     }
 
     private func requestNotificationPermission() async {
@@ -1057,7 +1105,7 @@ struct ReceiverOnboardingCompleteView: View {
                 .multilineTextAlignment(.center)
 
             // Subtitle
-            Text("You're ready to receive pings from your loved ones")
+            Text("You're ready to receive Pruufs from your loved ones")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -1160,6 +1208,7 @@ struct ReceiverOnboardingCoordinatorView: View {
     @State private var uniqueCode: String = ""
     @State private var connectionCount: Int = 0
     @State private var notificationsEnabled: Bool = false
+    @State private var hasInitialized: Bool = false
 
     /// Starting step (for resuming from saved progress)
     var startingStep: OnboardingStep = .receiverTutorial
@@ -1182,10 +1231,13 @@ struct ReceiverOnboardingCoordinatorView: View {
                 )
 
             case .uniqueCode:
-                UniqueCodeView(onContinue: { code in
-                    uniqueCode = code
-                    moveToStep(.senderCodeEntry)
-                })
+                UniqueCodeView(
+                    onContinue: { code in
+                        uniqueCode = code
+                        moveToStep(.senderCodeEntry)
+                    },
+                    onBack: { moveToPreviousStep() }
+                )
 
             case .senderCodeEntry:
                 SenderCodeEntryView(
@@ -1197,19 +1249,26 @@ struct ReceiverOnboardingCoordinatorView: View {
                     },
                     onSkip: {
                         moveToStep(.subscriptionInfo)
-                    }
+                    },
+                    onBack: { moveToPreviousStep() }
                 )
 
             case .subscriptionInfo:
-                SubscriptionInfoView(onContinue: {
-                    moveToStep(.notifications)
-                })
+                SubscriptionInfoView(
+                    onContinue: {
+                        moveToStep(.notifications)
+                    },
+                    onBack: { moveToPreviousStep() }
+                )
 
             case .notifications:
-                ReceiverNotificationPermissionView(onContinue: { enabled in
-                    notificationsEnabled = enabled
-                    moveToStep(.complete)
-                })
+                ReceiverNotificationPermissionView(
+                    onContinue: { enabled in
+                        notificationsEnabled = enabled
+                        moveToStep(.complete)
+                    },
+                    onBack: { moveToPreviousStep() }
+                )
 
             case .complete:
                 ReceiverOnboardingCompleteView(
@@ -1226,6 +1285,9 @@ struct ReceiverOnboardingCoordinatorView: View {
             }
         }
         .onAppear {
+            // Only initialize once to prevent resetting step during SwiftUI view lifecycle
+            guard !hasInitialized else { return }
+            hasInitialized = true
             initializeStep()
         }
     }
@@ -1259,6 +1321,27 @@ struct ReceiverOnboardingCoordinatorView: View {
         // Save progress
         Task {
             await saveProgress(step.onboardingStep)
+        }
+    }
+
+    /// Move to the previous step
+    private func moveToPreviousStep() {
+        withAnimation {
+            switch currentStep {
+            case .tutorial:
+                // Can't go back from tutorial
+                break
+            case .uniqueCode:
+                currentStep = .tutorial
+            case .senderCodeEntry:
+                currentStep = .uniqueCode
+            case .subscriptionInfo:
+                currentStep = .senderCodeEntry
+            case .notifications:
+                currentStep = .subscriptionInfo
+            case .complete:
+                currentStep = .notifications
+            }
         }
     }
 

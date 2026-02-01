@@ -56,10 +56,10 @@ final class AuthService: ObservableObject {
 
     // MARK: - Initialization
 
-    init(authClient: AuthClient = SupabaseConfig.auth, userService: UserService = UserService()) {
-        self.auth = authClient
-        self.userService = userService
-        Task {
+    init(authClient: AuthClient? = nil, userService: UserService? = nil) {
+        self.auth = authClient ?? SupabaseConfig.auth
+        self.userService = userService ?? UserService()
+        Task { @MainActor in
             await checkCurrentSession()
             await listenToAuthChanges()
         }
@@ -196,37 +196,47 @@ final class AuthService: ObservableObject {
     /// - Throws: AuthError if verification fails
     func verifyPhoneCode(_ code: String) async throws {
         isLoading = true
-        defer { isLoading = false }
 
         guard let storedCode = getStoredVerificationCode(),
               let storedPhone = getStoredVerificationPhone() else {
+            isLoading = false
             throw AuthServiceError.verificationExpired
         }
 
         // Check if verification code has expired
         if isVerificationExpired() {
             clearVerificationData()
+            isLoading = false
             throw AuthServiceError.verificationExpired
         }
 
         // Verify the code matches
         guard code == storedCode else {
+            isLoading = false
             throw AuthServiceError.invalidVerificationCode
         }
 
         // Clear verification data
         clearVerificationData()
 
-        // Sign in with Supabase using anonymous auth, then link phone
-        // This creates a user account without requiring SMS
-        let response = try await auth.signInAnonymously()
+        do {
+            // Sign in with Supabase using anonymous auth, then link phone
+            // This creates a user account without requiring SMS
+            let response = try await auth.signInAnonymously()
 
-        self.currentUser = response.user
-        self.isAuthenticated = true
-        self.pendingVerificationPhone = nil
+            self.currentUser = response.user
+            self.isAuthenticated = true
+            self.pendingVerificationPhone = nil
+            self.isLoading = false
 
-        // Handle post-authentication flow (create/fetch user, check onboarding)
-        await handlePostAuthenticationFlow(authUser: response.user, phoneNumber: storedPhone)
+            // Handle post-authentication flow (create/fetch user, check onboarding)
+            // This is wrapped in its own do-catch to prevent crashes
+            await handlePostAuthenticationFlow(authUser: response.user, phoneNumber: storedPhone)
+        } catch {
+            self.isLoading = false
+            print("Authentication error: \(error.localizedDescription)")
+            throw AuthServiceError.unknownError(error.localizedDescription)
+        }
     }
 
     /// Send verification code via APNs push notification
@@ -325,15 +335,21 @@ final class AuthService: ObservableObject {
     ///   - authUser: The authenticated Supabase user
     ///   - phoneNumber: The phone number used for authentication (optional, used for new user creation)
     private func handlePostAuthenticationFlow(authUser: User, phoneNumber: String? = nil) async {
+        // Set a safe default state immediately to prevent UI crashes during async operations
+        self.needsOnboarding = true
+        self.authState = .needsOnboarding
+
         do {
             // Get phone number from auth user if not provided
             let phone = phoneNumber ?? authUser.phone ?? ""
 
-            // Fetch or create the PRUUF user record
-            let pruufUser = try await userService.fetchOrCreateUser(
-                authId: authUser.id,
-                phoneNumber: phone
-            )
+            // Fetch or create the PRUUF user record with a timeout to prevent hanging
+            let pruufUser = try await withTimeout(seconds: 10) {
+                try await self.userService.fetchOrCreateUser(
+                    authId: authUser.id,
+                    phoneNumber: phone
+                )
+            }
 
             self.currentPruufUser = pruufUser
 
@@ -341,16 +357,31 @@ final class AuthService: ObservableObject {
             if pruufUser.hasCompletedOnboarding {
                 self.needsOnboarding = false
                 self.authState = .authenticated
-            } else {
-                self.needsOnboarding = true
-                self.authState = .needsOnboarding
             }
+            // If not completed, state is already set to needsOnboarding
         } catch {
             // Log the error but don't fail authentication
             // User is authenticated, but we couldn't fetch/create their record
             print("Error in post-authentication flow: \(error.localizedDescription)")
-            self.needsOnboarding = true
-            self.authState = .needsOnboarding
+            // State is already set to needsOnboarding above, so user can proceed
+        }
+    }
+
+    /// Execute an async operation with a timeout
+    private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask {
+                try await operation()
+            }
+
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw AuthServiceError.unknownError("Operation timed out")
+            }
+
+            let result = try await group.next()!
+            group.cancelAll()
+            return result
         }
     }
 

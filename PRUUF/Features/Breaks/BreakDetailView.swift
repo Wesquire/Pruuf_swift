@@ -49,7 +49,7 @@ struct BreakDetailView: View {
                 .padding(.vertical, 24)
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Break Details")
+            .navigationTitle("Pruuf Pause Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -58,9 +58,9 @@ struct BreakDetailView: View {
                     }
                 }
             }
-            .alert("Cancel Break?", isPresented: $showCancelConfirmation) {
-                Button("Keep Break", role: .cancel) { }
-                Button("Cancel Break", role: .destructive) {
+            .alert("Cancel Pruuf Pause?", isPresented: $showCancelConfirmation) {
+                Button("Keep Pruuf Pause", role: .cancel) { }
+                Button("Cancel Pruuf Pause", role: .destructive) {
                     Task {
                         await viewModel.cancelBreak()
                         if viewModel.errorMessage == nil {
@@ -70,11 +70,11 @@ struct BreakDetailView: View {
                     }
                 }
             } message: {
-                Text("Are you sure you want to cancel this break? Your receivers will be notified that you ended your break early, and normal ping requirements will resume immediately.")
+                Text("Are you sure you want to cancel this Pruuf Pause? Your receivers will be notified that you ended your Pruuf Pause early, and normal Pruuf requirements will resume immediately.")
             }
-            .alert("End Break Early?", isPresented: $showEndEarlyConfirmation) {
-                Button("Keep Break", role: .cancel) { }
-                Button("End Break", role: .destructive) {
+            .alert("End Pruuf Pause Early?", isPresented: $showEndEarlyConfirmation) {
+                Button("Keep Pruuf Pause", role: .cancel) { }
+                Button("End Pruuf Pause", role: .destructive) {
                     Task {
                         await viewModel.endBreakEarly()
                         if viewModel.errorMessage == nil {
@@ -84,7 +84,7 @@ struct BreakDetailView: View {
                     }
                 }
             } message: {
-                Text("Are you sure you want to end your break early? Your receivers will be notified, and you'll need to send your daily ping starting today.")
+                Text("Are you sure you want to end your Pruuf Pause early? Your receivers will be notified, and you'll need to send your daily Pruuf starting today.")
             }
             .alert("Error", isPresented: .init(
                 get: { viewModel.errorMessage != nil },
@@ -222,7 +222,7 @@ struct BreakDetailView: View {
     private var infoCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("During This Break")
+                Text("During This Pruuf Pause")
                     .font(.headline)
                     .foregroundColor(.primary)
                 Spacer()
@@ -230,7 +230,7 @@ struct BreakDetailView: View {
 
             BreakInfoRow(
                 icon: "bell.slash.fill",
-                text: "No ping reminders will be sent"
+                text: "No Pruuf reminders will be sent"
             )
 
             BreakInfoRow(
@@ -240,12 +240,12 @@ struct BreakDetailView: View {
 
             BreakInfoRow(
                 icon: "person.2.fill",
-                text: "Receivers will see you're on break"
+                text: "Receivers will see you're on Pruuf Pause"
             )
 
             BreakInfoRow(
                 icon: "hand.tap.fill",
-                text: "You can still ping voluntarily"
+                text: "You can still send a Pruuf voluntarily"
             )
         }
         .padding(16)
@@ -258,7 +258,7 @@ struct BreakDetailView: View {
     private var actionButtons: some View {
         VStack(spacing: 12) {
             if viewModel.breakItem.status == .active {
-                // End Break Early button for active breaks
+                // End Pruuf Pause Early button for active breaks
                 Button {
                     showEndEarlyConfirmation = true
                 } label: {
@@ -268,7 +268,7 @@ struct BreakDetailView: View {
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         } else {
                             Image(systemName: "xmark.circle.fill")
-                            Text("End Break Early")
+                            Text("End Pruuf Pause Early")
                         }
                     }
                     .font(.headline)
@@ -280,7 +280,7 @@ struct BreakDetailView: View {
                 }
                 .disabled(viewModel.isLoading)
             } else if viewModel.breakItem.status == .scheduled {
-                // Cancel Break button for scheduled breaks
+                // Cancel Pruuf Pause button for scheduled breaks
                 Button {
                     showCancelConfirmation = true
                 } label: {
@@ -290,7 +290,7 @@ struct BreakDetailView: View {
                                 .progressViewStyle(CircularProgressViewStyle(tint: .red))
                         } else {
                             Image(systemName: "trash.fill")
-                            Text("Cancel Break")
+                            Text("Cancel Pruuf Pause")
                         }
                     }
                     .font(.headline)

@@ -13,6 +13,12 @@ struct SenderDashboardView: View {
     @State private var showChangePingTime = false
     @State private var showEndBreakConfirmation = false
     @State private var showNotificationCenter = false
+    @State private var showOkConfirmation = false
+    @State private var showLateOkConfirmation = false
+    @State private var showVoluntaryOkConfirmation = false
+    @State private var showAllReceivers = false
+    @State private var isSettingsExpanded = true
+    @State private var showReceiverCodeEntry = false
 
     init(authService: AuthService) {
         _viewModel = StateObject(wrappedValue: SenderDashboardViewModel(authService: authService))
@@ -43,17 +49,11 @@ struct SenderDashboardView: View {
                             // 2. Today's Ping Status Card
                             todayPingCard
 
-                            // 3. In-Person Verification Button
-                            inPersonVerificationButton
-
-                            // 4. Your Receivers Section
+                            // 3. Your Receivers Section
                             receiversSection
 
-                            // 5. Recent Activity (7-day calendar)
-                            recentActivitySection
-
-                            // 6. Quick Actions
-                            quickActionsButton
+                            // 4. Settings Section (collapsible, default open)
+                            settingsSection
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 16)
@@ -72,36 +72,20 @@ struct SenderDashboardView: View {
                 await viewModel.loadDashboardData()
             }
         }
-        .sheet(isPresented: $viewModel.showQuickActions) {
-            QuickActionsSheet(
-                showScheduleBreak: $showScheduleBreak,
-                showChangePingTime: $showChangePingTime,
-                showAddReceiver: $showAddReceiver,
-                showSettings: $showSettings
-            )
-            .modifier(SheetHeightModifier())
-        }
         .sheet(isPresented: $showSettings) {
             NavigationView {
                 SettingsView(authService: authService)
             }
         }
         .sheet(isPresented: $showAddReceiver) {
-            AddConnectionView(authService: authService)
+            InviteReceiversFlowView(authService: authService)
+                .environmentObject(authService)
         }
         .sheet(isPresented: $showScheduleBreak) {
             ScheduleBreakView(authService: authService)
         }
         .sheet(isPresented: $showChangePingTime) {
             ChangePingTimePlaceholderView()
-        }
-        .alert("Enable Location", isPresented: $viewModel.showLocationPermissionAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Enable") {
-                viewModel.requestLocationPermission()
-            }
-        } message: {
-            Text("Location access is needed to verify your in-person check-in. This helps provide extra peace of mind to your receivers.")
         }
         .alert("Error", isPresented: .init(
             get: { viewModel.errorMessage != nil },
@@ -121,7 +105,7 @@ struct SenderDashboardView: View {
                 }
             }
         } message: {
-            Text("Are you sure you want to end your break early? Your receivers will be notified, and you'll need to send your daily ping starting today.")
+            Text("Are you sure you want to end your break early? Your receivers will be notified, and you'll need to send your daily Pruuf starting today.")
         }
     }
 
@@ -189,10 +173,17 @@ struct SenderDashboardView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.blue)
 
-            Text("Time to Ping!")
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
+            VStack(spacing: 8) {
+                Text("Time to Send Your Pruuf!")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
+
+                Text("Tap the Pruuf Ping button to let your receivers know that you're ok")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
 
             if !viewModel.countdownString.isEmpty {
                 Text(viewModel.countdownString)
@@ -201,23 +192,36 @@ struct SenderDashboardView: View {
             }
 
             Button {
-                Task {
-                    await viewModel.completePing()
-                }
+                showOkConfirmation = true
             } label: {
-                HStack {
+                HStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 32))
                     Text("I'm Okay")
+                        .font(.system(size: 28, weight: .bold))
                 }
-                .font(.headline)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
+                .padding(.vertical, 24)
                 .background(Color.blue)
-                .cornerRadius(12)
+                .cornerRadius(20)
             }
             .disabled(viewModel.isLoading)
             .accessibilityLabel("Tap to confirm you're okay")
+            .confirmationDialog(
+                "Send Your Pruuf?",
+                isPresented: $showOkConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Yes, I'm Okay") {
+                    Task {
+                        await viewModel.completePing()
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("This will notify your receivers that you are safe.")
+            }
 
             Text("Tap to let everyone know you're safe")
                 .font(.caption)
@@ -231,7 +235,7 @@ struct SenderDashboardView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.green)
 
-            Text("Ping Sent!")
+            Text("Pruuf Sent!")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
@@ -256,7 +260,7 @@ struct SenderDashboardView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.red)
 
-            Text("Ping Missed")
+            Text("Pruuf Missed")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
@@ -270,13 +274,11 @@ struct SenderDashboardView: View {
             }
 
             Button {
-                Task {
-                    await viewModel.completePingLate()
-                }
+                showLateOkConfirmation = true
             } label: {
                 HStack {
                     Image(systemName: "arrow.clockwise.circle.fill")
-                    Text("Ping Now")
+                    Text("Send Pruuf Now")
                 }
                 .font(.headline)
                 .foregroundColor(.white)
@@ -286,7 +288,21 @@ struct SenderDashboardView: View {
                 .cornerRadius(12)
             }
             .disabled(viewModel.isLoading)
-            .accessibilityLabel("Send a late ping")
+            .accessibilityLabel("Send a late Pruuf")
+            .confirmationDialog(
+                "Send Late Pruuf?",
+                isPresented: $showLateOkConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Yes, Send Pruuf Now") {
+                    Task {
+                        await viewModel.completePingLate()
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("This will notify your receivers that you are safe, even though you missed the deadline.")
+            }
         }
     }
 
@@ -296,7 +312,7 @@ struct SenderDashboardView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.gray)
 
-            Text("On Break")
+            Text("On Pruuf Pause")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
@@ -312,13 +328,11 @@ struct SenderDashboardView: View {
             // Section 7.1: Optional voluntary ping completion during breaks
             // "allow optional voluntary completion"
             Button {
-                Task {
-                    await viewModel.completePingVoluntary()
-                }
+                showVoluntaryOkConfirmation = true
             } label: {
                 HStack {
                     Image(systemName: "hand.tap.fill")
-                    Text("Ping Anyway (Optional)")
+                    Text("Send Pruuf Anyway (Optional)")
                 }
                 .font(.subheadline)
                 .foregroundColor(.green)
@@ -328,14 +342,28 @@ struct SenderDashboardView: View {
                 .cornerRadius(10)
             }
             .disabled(viewModel.isLoading)
-            .accessibilityLabel("Send a voluntary ping while on break")
+            .accessibilityLabel("Send a voluntary Pruuf while on Pruuf Pause")
+            .confirmationDialog(
+                "Send Voluntary Pruuf?",
+                isPresented: $showVoluntaryOkConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Yes, Send Pruuf") {
+                    Task {
+                        await viewModel.completePingVoluntary()
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("This will notify your receivers that you are safe. Your Pruuf Pause will continue.")
+            }
 
             Button {
                 showEndBreakConfirmation = true
             } label: {
                 HStack {
                     Image(systemName: "xmark.circle.fill")
-                    Text("End Break Early")
+                    Text("End Pruuf Pause Early")
                 }
                 .font(.headline)
                 .foregroundColor(.blue)
@@ -345,50 +373,20 @@ struct SenderDashboardView: View {
                 .cornerRadius(12)
             }
             .disabled(viewModel.isLoading)
-            .accessibilityLabel("End break early and resume pings")
+            .accessibilityLabel("End break early and resume Pruufs")
 
-            Text("You can ping voluntarily without ending your break")
+            Text("You can send a Pruuf voluntarily without ending your break")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
     }
 
-    // MARK: - In-Person Verification Button
-
-    private var inPersonVerificationButton: some View {
-        Button {
-            Task {
-                await viewModel.completePingInPerson()
-            }
-        } label: {
-            HStack(spacing: 12) {
-                if viewModel.isCapturingLocation {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle())
-                } else {
-                    Image(systemName: "location.fill")
-                        .font(.headline)
-                }
-
-                Text(viewModel.isCapturingLocation ? "Getting Location..." : "Verify In Person")
-                    .font(.headline)
-            }
-            .foregroundColor(.blue)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(Color.blue.opacity(0.1))
-            .cornerRadius(12)
-        }
-        .disabled(viewModel.isLoading || viewModel.isCapturingLocation || viewModel.todayPingState == .completed)
-        .opacity(viewModel.todayPingState == .completed ? 0.5 : 1.0)
-        .accessibilityLabel("Verify in person with location")
-    }
-
     // MARK: - Receivers Section
 
     private var receiversSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header
             HStack {
                 Text("Your Receivers")
                     .font(.headline)
@@ -408,96 +406,172 @@ struct SenderDashboardView: View {
                 Spacer()
             }
 
-            if viewModel.receivers.isEmpty {
-                emptyReceiversView
-            } else {
-                receiversList
-            }
+            // Action Buttons
+            VStack(spacing: 12) {
+                // View Receivers Button
+                NavigationLink {
+                    ConnectionsPlaceholderView()
+                } label: {
+                    HStack(spacing: 16) {
+                        Image(systemName: "person.2.fill")
+                            .font(.title3)
+                            .foregroundColor(.blue)
+                            .frame(width: 32)
 
-            addReceiverButton
-        }
-        .padding(16)
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-    }
+                        Text("See My Receivers")
+                            .font(.body)
+                            .foregroundColor(.primary)
 
-    private var emptyReceiversView: some View {
-        NoReceiversEmptyState {
-            showAddReceiver = true
-        }
-        .padding(.vertical, -16) // Adjust padding since it's inside a card
-    }
+                        Spacer()
 
-    private var receiversList: some View {
-        VStack(spacing: 8) {
-            ForEach(viewModel.receivers.prefix(3), id: \.id) { connection in
-                ReceiverRowView(
-                    connection: connection,
-                    authService: authService,
-                    onConnectionUpdated: {
-                        await viewModel.refresh()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
-                )
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(12)
+                }
+
+                // Invite Receivers Button
+                Button {
+                    showAddReceiver = true
+                } label: {
+                    HStack(spacing: 16) {
+                        Image(systemName: "paperplane.fill")
+                            .font(.title3)
+                            .foregroundColor(.green)
+                            .frame(width: 32)
+
+                        Text("Invite Receivers")
+                            .font(.body)
+                            .foregroundColor(.primary)
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(12)
+                }
             }
 
-            if viewModel.receivers.count > 3 {
-                Text("+ \(viewModel.receivers.count - 3) more")
-                    .font(.caption)
+            // I received a code section
+            Divider()
+                .padding(.vertical, 4)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Did someone share their code with you?")
+                    .font(.subheadline)
                     .foregroundColor(.secondary)
-                    .padding(.top, 4)
+
+                Button {
+                    showReceiverCodeEntry = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "keyboard")
+                            .font(.subheadline)
+                        Text("I received a code")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.purple)
+                }
             }
-        }
-    }
 
-    private var addReceiverButton: some View {
-        Button {
-            showAddReceiver = true
-        } label: {
-            HStack {
-                Image(systemName: "plus.circle.fill")
-                Text("Add Receiver")
-                    .font(.subheadline.weight(.medium))
-            }
-            .foregroundColor(.blue)
-        }
-        .padding(.top, 8)
-    }
+            // Sender Code Badge (Plan 4 Req 2)
+            if viewModel.senderInvitationCode != nil {
+                Divider()
+                    .padding(.vertical, 4)
 
-    // MARK: - Recent Activity Section
-
-    private var recentActivitySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Activity")
-                .font(.headline)
-                .foregroundColor(.primary)
-
-            if viewModel.pingHistory.isEmpty {
-                NoActivityEmptyState()
-                    .padding(.vertical, -16) // Adjust padding since it's inside a card
-            } else {
-                PingHistoryCalendarView(history: viewModel.pingHistory)
+                SenderCodeBadge(code: viewModel.senderInvitationCode)
             }
         }
         .padding(16)
         .background(Color(.systemBackground))
         .cornerRadius(16)
+        .sheet(isPresented: $showReceiverCodeEntry) {
+            ReceiverCodeEntryView(authService: authService)
+        }
     }
 
-    // MARK: - Quick Actions Button
+    // MARK: - Settings Section
 
-    private var quickActionsButton: some View {
-        Button {
-            viewModel.showQuickActions = true
-        } label: {
-            HStack {
-                Image(systemName: "ellipsis.circle.fill")
-                Text("Quick Actions")
-                    .font(.subheadline.weight(.medium))
-            }
-            .foregroundColor(.secondary)
+    private var settingsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            DisclosureGroup(
+                isExpanded: $isSettingsExpanded,
+                content: {
+                    VStack(spacing: 12) {
+                        // Change Pruuf Time
+                        Button {
+                            showChangePingTime = true
+                        } label: {
+                            HStack(spacing: 16) {
+                                Image(systemName: "clock.arrow.circlepath")
+                                    .font(.title3)
+                                    .foregroundColor(.blue)
+                                    .frame(width: 32)
+
+                                Text("Change Pruuf Time")
+                                    .font(.body)
+                                    .foregroundColor(.primary)
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            .background(Color(.systemBackground))
+                            .cornerRadius(12)
+                        }
+
+                        // Schedule a Pruuf Pause
+                        Button {
+                            showScheduleBreak = true
+                        } label: {
+                            HStack(spacing: 16) {
+                                Image(systemName: "calendar.badge.plus")
+                                    .font(.title3)
+                                    .foregroundColor(.purple)
+                                    .frame(width: 32)
+
+                                Text("Schedule a Pruuf Pause")
+                                    .font(.body)
+                                    .foregroundColor(.primary)
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            .background(Color(.systemBackground))
+                            .cornerRadius(12)
+                        }
+                    }
+                    .padding(.top, 8)
+                },
+                label: {
+                    Text("Settings")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                }
+            )
         }
-        .padding(.top, 8)
-        .accessibilityLabel("Open quick actions menu")
+        .padding(16)
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
     }
 }
 
@@ -631,156 +705,6 @@ struct ReceiverRowView: View {
     }
 }
 
-// MARK: - Ping History Calendar View
-
-struct PingHistoryCalendarView: View {
-    let history: [DayPingStatus]
-
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(history) { day in
-                DayDotView(day: day)
-                    .frame(maxWidth: .infinity)
-            }
-        }
-    }
-}
-
-struct DayDotView: View {
-    let day: DayPingStatus
-    @State private var showDetail = false
-
-    var body: some View {
-        Button {
-            showDetail.toggle()
-        } label: {
-            VStack(spacing: 6) {
-                Text(day.dayAbbreviation)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-
-                Circle()
-                    .fill(day.dotColor)
-                    .frame(width: 12, height: 12)
-
-                Text(day.dayNumber)
-                    .font(.caption)
-                    .foregroundColor(.primary)
-            }
-        }
-        .buttonStyle(PlainButtonStyle())
-        .popover(isPresented: $showDetail) {
-            VStack(spacing: 8) {
-                Text(formattedDate)
-                    .font(.headline)
-
-                Text(day.status.displayName)
-                    .font(.subheadline)
-                    .foregroundColor(day.dotColor)
-            }
-            .padding()
-        }
-    }
-
-    private var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE, MMM d"
-        return formatter.string(from: day.date)
-    }
-}
-
-// MARK: - Quick Actions Sheet
-
-struct QuickActionsSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Binding var showScheduleBreak: Bool
-    @Binding var showChangePingTime: Bool
-    @Binding var showAddReceiver: Bool
-    @Binding var showSettings: Bool
-
-    var body: some View {
-        VStack(spacing: 0) {
-            // Handle
-            RoundedRectangle(cornerRadius: 2.5)
-                .fill(Color.secondary.opacity(0.3))
-                .frame(width: 36, height: 5)
-                .padding(.top, 8)
-                .padding(.bottom, 16)
-
-            VStack(spacing: 8) {
-                QuickActionButton(
-                    icon: "calendar.badge.plus",
-                    title: "Schedule a Break",
-                    color: .purple
-                ) {
-                    dismiss()
-                    showScheduleBreak = true
-                }
-
-                QuickActionButton(
-                    icon: "clock.arrow.circlepath",
-                    title: "Change Ping Time",
-                    color: .blue
-                ) {
-                    dismiss()
-                    showChangePingTime = true
-                }
-
-                QuickActionButton(
-                    icon: "person.badge.plus",
-                    title: "Invite Receivers",
-                    color: .green
-                ) {
-                    dismiss()
-                    showAddReceiver = true
-                }
-
-                QuickActionButton(
-                    icon: "gearshape",
-                    title: "Settings",
-                    color: .gray
-                ) {
-                    dismiss()
-                    showSettings = true
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 24)
-        }
-    }
-}
-
-struct QuickActionButton: View {
-    let icon: String
-    let title: String
-    let color: Color
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundColor(color)
-                    .frame(width: 32)
-
-                Text(title)
-                    .font(.body)
-                    .foregroundColor(.primary)
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(Color(.systemBackground))
-            .cornerRadius(12)
-        }
-    }
-}
 
 // MARK: - Placeholder Views
 
@@ -827,8 +751,8 @@ struct ChangePingTimePlaceholderView: View {
 
     var body: some View {
         NavigationView {
-            Text("Change Ping Time - Coming Soon")
-                .navigationTitle("Ping Time")
+            Text("Change Pruuf Time - Coming Soon")
+                .navigationTitle("Pruuf Time")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {

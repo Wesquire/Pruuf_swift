@@ -44,7 +44,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var pingTime: Date = Date()
     @Published var pingTimeString: String = "09:00"
     @Published var pingEnabled: Bool = true
-    @Published var gracePeriod: Int = 90
+    @Published var gracePeriod: Int = 60
 
     // Subscription
     @Published var subscriptionStatus: SubscriptionStatus = .trial
@@ -333,7 +333,7 @@ final class SettingsViewModel: ObservableObject {
             onboardingStepForNewRole = onboardingStep
             shouldNavigateToOnboarding = true
 
-            successMessage = "Sender role added! Let's set up your daily ping time."
+            successMessage = "Sender role added! Let's set up your daily Pruuf time."
             showSuccess = true
         } catch {
             errorMessage = "Failed to add sender role: \(error.localizedDescription)"
@@ -571,7 +571,7 @@ struct DataExportProgressView: View {
                     Text("Generating Your Data Export")
                         .font(.headline)
 
-                    Text("This may take a moment. We're gathering all your data including profile, connections, pings, notifications, breaks, and payment history.")
+                    Text("This may take a moment. We're gathering all your data including profile, connections, Pruufs, notifications, breaks, and payment history.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -678,39 +678,45 @@ struct SettingsView: View {
     @State private var showPingTimePicker = false
     @State private var showExportProgressSheet = false
 
+    // Requirement 10: Collapsed section states (collapsed by default)
+    @State private var isAccountExpanded = false
+    @State private var isPrivacyExpanded = false
+    @State private var isAboutExpanded = false
+
     init(authService: AuthService) {
         _viewModel = StateObject(wrappedValue: SettingsViewModel(authService: authService))
     }
 
     var body: some View {
         List {
-            // 1. Account Section
-            accountSection
-
-            // 2. Ping Settings (Senders only)
+            // 1. Pruuf Settings (Senders only) - includes Notification Settings per Req 10.8
             if viewModel.isSender {
                 pingSettingsSection
             }
 
-            // 3. Notifications Section
-            notificationsSection
+            // 2. Notifications Section (for receivers who don't see Pruuf Settings)
+            if !viewModel.isSender {
+                notificationsSection
+            }
 
-            // 4. Subscription (Receivers only)
+            // 3. Subscription (Receivers only)
             if viewModel.isReceiver {
                 subscriptionSection
             }
 
-            // 5. Connections Section
-            connectionsSection
+            // 4. Account Section - Collapsed by default per Req 10.4
+            accountSectionCollapsible
 
-            // 6. Privacy & Data Section
-            privacyDataSection
+            // 5. Privacy & Data Section - Collapsed by default per Req 10.5
+            privacyDataSectionCollapsible
 
-            // 7. About Section
-            aboutSection
+            // 6. About Section - Collapsed by default per Req 10.6
+            aboutSectionCollapsible
 
             // Sign Out
             signOutSection
+
+            // Note: Connections Section removed per Req 10.7 (redundant with Receivers tab)
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
@@ -786,7 +792,7 @@ struct SettingsView: View {
                 viewModel.cancelDeletion()
             }
         } message: {
-            Text("All your data, connections, and ping history will be permanently deleted after 30 days. You will be signed out immediately.")
+            Text("All your data, connections, and Pruuf history will be permanently deleted after 30 days. You will be signed out immediately.")
         }
         .sheet(isPresented: $showExportSheet) {
             if let url = exportURL {
@@ -802,15 +808,6 @@ struct SettingsView: View {
 
     private var accountSection: some View {
         Section {
-            // Phone Number (read-only)
-            HStack {
-                Label("Phone Number", systemImage: "phone.fill")
-                    .foregroundColor(.primary)
-                Spacer()
-                Text(viewModel.displayPhoneNumber)
-                    .foregroundColor(.secondary)
-            }
-
             // Timezone (auto-detected, read-only)
             HStack {
                 Label("Timezone", systemImage: "clock.fill")
@@ -869,6 +866,75 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Collapsible Account Section (Req 10.4)
+
+    private var accountSectionCollapsible: some View {
+        Section {
+            DisclosureGroup(
+                isExpanded: $isAccountExpanded,
+                content: {
+                    // Timezone (auto-detected, read-only)
+                    HStack {
+                        Label("Timezone", systemImage: "clock.fill")
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Text(timezoneDisplayName)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+
+                    // Role
+                    HStack {
+                        Label("Role", systemImage: roleIconName)
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Text(roleDisplayName)
+                            .foregroundColor(.secondary)
+                    }
+
+                    // Add Role Button
+                    if viewModel.canAddSenderRole {
+                        Button {
+                            viewModel.showAddRoleSheet = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundColor(.blue)
+                                Text("Add Sender Role")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                    } else if viewModel.canAddReceiverRole {
+                        Button {
+                            viewModel.showAddRoleSheet = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundColor(.blue)
+                                Text("Add Receiver Role")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                    }
+
+                    // Delete Account (danger zone)
+                    Button(role: .destructive) {
+                        viewModel.showDeleteConfirmation = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "trash.fill")
+                            Text("Delete Account")
+                        }
+                    }
+                },
+                label: {
+                    Label("Account", systemImage: "person.circle.fill")
+                        .font(.headline)
+                }
+            )
+        }
+    }
+
     private var timezoneDisplayName: String {
         let tz = TimeZone(identifier: viewModel.displayTimezone) ?? TimeZone.current
         return tz.localizedName(for: .standard, locale: .current) ?? viewModel.displayTimezone
@@ -901,7 +967,7 @@ struct SettingsView: View {
                 showPingTimePicker = true
             } label: {
                 HStack {
-                    Label("Daily Ping Time", systemImage: "alarm.fill")
+                    Label("Daily Pruuf Time", systemImage: "alarm.fill")
                         .foregroundColor(.primary)
                     Spacer()
                     Text(formattedPingTime)
@@ -912,33 +978,14 @@ struct SettingsView: View {
                 }
             }
 
-            // Grace period (read-only)
-            HStack {
-                Label("Grace Period", systemImage: "timer")
-                    .foregroundColor(.primary)
-                Spacer()
-                Text("\(viewModel.gracePeriod) minutes")
-                    .foregroundColor(.secondary)
-            }
+            // Note: "Enable Pruufs" toggle removed per Plan 4 Requirement 10.1
 
-            // Enable/disable pings (master toggle)
-            Toggle(isOn: Binding(
-                get: { viewModel.pingEnabled },
-                set: { newValue in
-                    Task {
-                        await viewModel.togglePingEnabled(newValue)
-                    }
-                }
-            )) {
-                Label("Enable Pings", systemImage: "bell.badge.fill")
-            }
-
-            // Schedule a Break
+            // Schedule a Pruuf Pause (Req 10.3: renamed from "Schedule a Break")
             Button {
                 showBreaksList = true
             } label: {
                 HStack {
-                    Label("Schedule a Break", systemImage: "calendar.badge.clock")
+                    Label("Schedule a Pruuf Pause", systemImage: "calendar.badge.clock")
                         .foregroundColor(.primary)
                     Spacer()
                     Image(systemName: "chevron.right")
@@ -946,10 +993,17 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                 }
             }
+
+            // Notification Settings (Req 10.8: nested in Pruuf Settings)
+            NavigationLink {
+                NotificationSettingsView(userRole: viewModel.userRole, userId: viewModel.userId)
+            } label: {
+                Label("Notification Settings", systemImage: "bell.fill")
+            }
         } header: {
-            Text("Ping Settings")
+            Text("Pruuf Settings")
         } footer: {
-            Text("Grace period is the extra time you have after your scheduled ping time to complete your check-in.")
+            Text("You have a 60-minute grace period after your scheduled time to complete your check-in.")
         }
     }
 
@@ -972,7 +1026,7 @@ struct SettingsView: View {
         } header: {
             Text("Notifications")
         } footer: {
-            Text("Manage ping reminders, alerts, and notification preferences.")
+            Text("Manage Pruuf reminders, alerts, and notification preferences.")
         }
     }
 
@@ -1232,7 +1286,7 @@ struct SettingsView: View {
         } header: {
             Text("Privacy & Data")
         } footer: {
-            Text("Export includes your profile, connections, ping history, notifications, breaks, and payment transactions in machine-readable formats (JSON/CSV).")
+            Text("Export includes your profile, connections, Pruuf history, notifications, breaks, and payment transactions in machine-readable formats (JSON/CSV).")
                 .font(.caption)
         }
     }
@@ -1304,6 +1358,163 @@ struct SettingsView: View {
             }
         } header: {
             Text("About")
+        }
+    }
+
+    // MARK: - Collapsible Privacy Section (Req 10.5)
+
+    private var privacyDataSectionCollapsible: some View {
+        Section {
+            DisclosureGroup(
+                isExpanded: $isPrivacyExpanded,
+                content: {
+                    // Export my data (GDPR compliance)
+                    Button {
+                        showExportProgressSheet = true
+                        Task {
+                            exportURL = await viewModel.exportUserData()
+                            if exportURL != nil {
+                                showExportSheet = true
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Label("Export My Data", systemImage: "square.and.arrow.up")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            if viewModel.isExportingData {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            } else {
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    .disabled(viewModel.isExportingData)
+
+                    // Delete my data
+                    Button(role: .destructive) {
+                        viewModel.showDeleteConfirmation = true
+                    } label: {
+                        Label("Delete My Data", systemImage: "trash")
+                    }
+
+                    // Privacy policy link
+                    Button {
+                        if let url = URL(string: "https://pruuf.com/privacy") {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        HStack {
+                            Label("Privacy Policy", systemImage: "hand.raised.fill")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
+                    // Terms of service link
+                    Button {
+                        if let url = URL(string: "https://pruuf.com/terms") {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        HStack {
+                            Label("Terms of Service", systemImage: "doc.text.fill")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                },
+                label: {
+                    Label("Privacy & Data", systemImage: "hand.raised.fill")
+                        .font(.headline)
+                }
+            )
+        }
+    }
+
+    // MARK: - Collapsible About Section (Req 10.6)
+
+    private var aboutSectionCollapsible: some View {
+        Section {
+            DisclosureGroup(
+                isExpanded: $isAboutExpanded,
+                content: {
+                    // App version
+                    HStack {
+                        Label("Version", systemImage: "info.circle.fill")
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Text(Bundle.main.appVersion)
+                            .foregroundColor(.secondary)
+                    }
+
+                    // Build number
+                    HStack {
+                        Label("Build", systemImage: "hammer.fill")
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Text(Bundle.main.buildNumber)
+                            .foregroundColor(.secondary)
+                    }
+
+                    // Contact Support
+                    Button {
+                        if let url = URL(string: "mailto:support@pruuf.com?subject=PRUUF%20Support%20Request") {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        HStack {
+                            Label("Contact Support", systemImage: "envelope.fill")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
+                    // Rate PRUUF
+                    Button {
+                        requestAppStoreReview()
+                    } label: {
+                        HStack {
+                            Label("Rate PRUUF", systemImage: "star.fill")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
+                    // Share with Friends
+                    Button {
+                        shareApp()
+                    } label: {
+                        HStack {
+                            Label("Share with Friends", systemImage: "square.and.arrow.up")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                },
+                label: {
+                    Label("About", systemImage: "info.circle.fill")
+                        .font(.headline)
+                }
+            )
         }
     }
 
@@ -1403,13 +1614,13 @@ struct SettingsView: View {
     private var pingTimePickerSheet: some View {
         NavigationView {
             VStack(spacing: 24) {
-                Text("Set Daily Ping Time")
+                Text("Set Daily Pruuf Time")
                     .font(.headline)
                     .padding(.top)
 
                 // iOS wheel time picker per Section 10.2
                 DatePicker(
-                    "Ping Time",
+                    "Pruuf Time",
                     selection: Binding(
                         get: { viewModel.pingTime },
                         set: { newTime in

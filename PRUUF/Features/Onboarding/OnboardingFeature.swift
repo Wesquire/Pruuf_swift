@@ -35,7 +35,6 @@ struct RoleSelectionView: View {
     @State private var showContinue: Bool = false
     @State private var isProcessing: Bool = false
     @State private var errorMessage: String?
-    @State private var showAddOtherRolePrompt: Bool = false
 
     /// Callback when role selection is complete
     var onRoleSelected: ((UserRole) -> Void)?
@@ -119,23 +118,6 @@ struct RoleSelectionView: View {
         }
         .animation(.easeInOut(duration: 0.25), value: showContinue)
         .animation(.easeInOut(duration: 0.25), value: selectedRole)
-        // Add Other Role Prompt (EC-2.2)
-        .alert("Want to add the other role?", isPresented: $showAddOtherRolePrompt) {
-            Button("Not Now") {
-                finalizeSelection()
-            }
-            Button("Yes, Add It") {
-                Task {
-                    await addOtherRole()
-                }
-            }
-        } message: {
-            if selectedRole == .sender {
-                Text("You can also receive daily check-ins from loved ones. This feature requires a subscription after a 15-day free trial.")
-            } else {
-                Text("You can also send daily check-ins to let people know you're okay. This feature is always free.")
-            }
-        }
     }
 
     // MARK: - Private Methods
@@ -169,37 +151,21 @@ struct RoleSelectionView: View {
         errorMessage = nil
 
         do {
+            // Get the phone number from auth service for user creation if needed
+            let phoneNumber = authService.currentPruufUser?.phoneNumber ?? authService.pendingVerificationPhone
+
             // Save the role selection to database
-            _ = try await roleService.selectRole(role, for: userId)
+            _ = try await roleService.selectRole(role, for: userId, phoneNumber: phoneNumber)
 
             // Save onboarding progress (EC-2.1)
             try await roleService.saveOnboardingProgress(step: .roleSelection, for: userId)
 
-            // Show prompt to add other role (EC-2.2)
+            // Proceed directly to the appropriate onboarding flow
             isProcessing = false
-            showAddOtherRolePrompt = true
+            finalizeSelection()
         } catch {
             isProcessing = false
             errorMessage = "Failed to save selection. Please try again."
-        }
-    }
-
-    private func addOtherRole() async {
-        guard let role = selectedRole else { return }
-        guard let userId = authService.currentUser?.id else { return }
-
-        let otherRole: UserRole = (role == .sender) ? .receiver : .sender
-
-        isProcessing = true
-
-        do {
-            _ = try await roleService.addSecondRole(otherRole, for: userId)
-            isProcessing = false
-            finalizeSelection()
-        } catch {
-            isProcessing = false
-            // If adding other role fails, just continue with the selected role
-            finalizeSelection()
         }
     }
 
@@ -330,7 +296,13 @@ struct OnboardingCoordinatorView: View {
 
     /// Check if user should resume from a previous onboarding step (EC-2.1)
     private func checkResumePoint() async {
+        // Wait briefly for auth state to stabilize after navigation transition
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+
         guard let userId = authService.currentUser?.id else {
+            // No user ID yet - default to role selection
+            print("OnboardingCoordinator: No user ID available, defaulting to role selection")
+            currentState = .roleSelection
             isLoadingResume = false
             return
         }
@@ -350,6 +322,7 @@ struct OnboardingCoordinatorView: View {
             }
         } catch {
             // Default to role selection if we can't determine resume point
+            print("OnboardingCoordinator: Error getting resume step: \(error.localizedDescription)")
             currentState = .roleSelection
         }
 

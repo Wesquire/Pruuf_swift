@@ -243,6 +243,70 @@ final class InvitationService: ObservableObject {
         }
     }
 
+    // MARK: - Nudge Receiver (Requirement 3)
+
+    /// Send a reminder/nudge to a pending receiver
+    /// Rate limited to once per 24 hours per receiver
+    /// - Parameters:
+    ///   - invitationId: The invitation ID to nudge
+    /// - Returns: The invitation if nudge is allowed, nil if rate limited
+    func nudgeReceiver(invitationId: UUID) async throws -> ConnectionInvitation? {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            // Fetch the invitation to check last nudge time
+            let invitations: [ConnectionInvitation] = try await database
+                .from("connection_invitations")
+                .select()
+                .eq("id", value: invitationId.uuidString)
+                .eq("status", value: InvitationStatus.pending.rawValue)
+                .execute()
+                .value
+
+            guard let invitation = invitations.first else {
+                throw InvitationServiceError.invalidCode
+            }
+
+            // Check rate limiting - max 1 nudge per 24 hours
+            if let lastNudge = invitation.lastNudgeAt {
+                let hoursSinceLastNudge = Date().timeIntervalSince(lastNudge) / 3600
+                if hoursSinceLastNudge < 24 {
+                    throw InvitationServiceError.nudgeRateLimited(hoursRemaining: Int(24 - hoursSinceLastNudge))
+                }
+            }
+
+            // Update the last_nudge_at timestamp
+            let updatedInvitation: ConnectionInvitation = try await database
+                .from("connection_invitations")
+                .update(["last_nudge_at": ISO8601DateFormatter().string(from: Date())])
+                .eq("id", value: invitationId.uuidString)
+                .select()
+                .single()
+                .execute()
+                .value
+
+            return updatedInvitation
+
+        } catch let invitationError as InvitationServiceError {
+            self.error = invitationError
+            throw invitationError
+        } catch {
+            let serviceError = InvitationServiceError.nudgeFailed(error.localizedDescription)
+            self.error = serviceError
+            throw serviceError
+        }
+    }
+
+    /// Generate a nudge/reminder message
+    /// - Parameters:
+    ///   - senderName: The name of the sender
+    ///   - code: The invitation code
+    /// - Returns: The formatted reminder message
+    func generateNudgeMessage(senderName: String, code: String) -> String {
+        return "Reminder: \(senderName) is waiting for you to accept their PRUUF invitation. Use code \(code) in the PRUUF app to connect: https://pruuf.app/join"
+    }
+
     // MARK: - Generate Invitation Message
 
     /// Generate the invitation message (for sharing via Messages or other apps)
@@ -251,7 +315,7 @@ final class InvitationService: ObservableObject {
     ///   - code: The invitation code
     /// - Returns: The formatted invitation message
     func generateInvitationMessage(senderName: String, code: String) -> String {
-        return "\(senderName) wants to send you daily pings on PRUUF to let you know they're safe. Download the app and use code \(code) to connect: https://pruuf.app/join"
+        return "\(senderName) wants to send you daily Pruufs on PRUUF to let you know they're safe. Download the app and use code \(code) to connect: https://pruuf.app/join"
     }
 
     // MARK: - Clear Data
@@ -277,6 +341,9 @@ struct ConnectionInvitation: Codable, Identifiable, Equatable {
     let createdAt: Date
     var updatedAt: Date
 
+    /// Last time a nudge/reminder was sent (for rate limiting)
+    var lastNudgeAt: Date?
+
     /// The sender's user profile (populated via join)
     var sender: PruufUser?
 
@@ -290,6 +357,7 @@ struct ConnectionInvitation: Codable, Identifiable, Equatable {
         case expiresAt = "expires_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+        case lastNudgeAt = "last_nudge_at"
         case sender
     }
 
@@ -348,6 +416,8 @@ enum InvitationServiceError: LocalizedError {
     case codeExpired
     case acceptFailed(String)
     case cancelFailed(String)
+    case nudgeFailed(String)
+    case nudgeRateLimited(hoursRemaining: Int)
 
     var errorDescription: String? {
         switch self {
@@ -363,6 +433,10 @@ enum InvitationServiceError: LocalizedError {
             return "Failed to accept invitation: \(message)"
         case .cancelFailed(let message):
             return "Failed to cancel invitation: \(message)"
+        case .nudgeFailed(let message):
+            return "Failed to send reminder: \(message)"
+        case .nudgeRateLimited(let hoursRemaining):
+            return "You can send another reminder in \(hoursRemaining) hour(s)."
         }
     }
 }

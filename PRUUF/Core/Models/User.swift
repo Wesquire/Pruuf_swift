@@ -24,7 +24,7 @@ enum UserRole: String, Codable, CaseIterable, Equatable {
     var description: String {
         switch self {
         case .sender:
-            return "Let people know you're okay with a simple daily ping"
+            return "Let people know you're okay with a simple daily Pruuf"
         case .receiver:
             return "Get daily confirmation that your loved ones are safe"
         case .both:
@@ -452,7 +452,7 @@ enum OnboardingStep: String, Codable, CaseIterable, Equatable {
         case .senderTutorial:
             return "Sender tutorial"
         case .senderPingTime:
-            return "Set ping time"
+            return "Set Pruuf time"
         case .senderConnections:
             return "Add connections"
         case .senderNotifications:
@@ -510,6 +510,12 @@ struct SenderProfile: Codable, Identifiable, Equatable {
     /// Whether pings are currently enabled
     var pingEnabled: Bool
 
+    /// Unique 6-digit invitation code for receivers to connect
+    var invitationCode: String?
+
+    /// Whether the sender profile is active
+    var isActive: Bool?
+
     /// When the profile was created
     let createdAt: Date
 
@@ -521,6 +527,8 @@ struct SenderProfile: Codable, Identifiable, Equatable {
         case userId = "user_id"
         case pingTime = "ping_time"
         case pingEnabled = "ping_enabled"
+        case invitationCode = "invitation_code"
+        case isActive = "is_active"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -531,11 +539,15 @@ struct NewSenderProfileRequest: Codable {
     let userId: UUID
     let pingTime: String
     let pingEnabled: Bool
+    let invitationCode: String
+    let isActive: Bool
 
     enum CodingKeys: String, CodingKey {
         case userId = "user_id"
         case pingTime = "ping_time"
         case pingEnabled = "ping_enabled"
+        case invitationCode = "invitation_code"
+        case isActive = "is_active"
     }
 }
 

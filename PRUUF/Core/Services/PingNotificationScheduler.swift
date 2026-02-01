@@ -212,7 +212,7 @@ final class PingNotificationScheduler: ObservableObject {
     /// "Time to ping! Tap to let everyone know you're okay."
     private func scheduleScheduledTimeReminder(for ping: Ping, sound: UNNotificationSound?) async {
         let content = UNMutableNotificationContent()
-        content.title = "Time to Ping!"
+        content.title = "Time to Send Your Pruuf!"
         content.body = "Tap to let everyone know you're okay."
         content.sound = sound
         content.categoryIdentifier = NotificationCategory.pingReminder
@@ -252,8 +252,8 @@ final class PingNotificationScheduler: ObservableObject {
     /// "Reminder: 15 minutes until your ping deadline"
     private func scheduleDeadlineWarning(for ping: Ping, sound: UNNotificationSound?) async {
         let content = UNMutableNotificationContent()
-        content.title = "Ping Deadline Approaching"
-        content.body = "Reminder: 15 minutes until your ping deadline"
+        content.title = "Pruuf Deadline Approaching"
+        content.body = "Reminder: 15 minutes until your Pruuf deadline"
         content.sound = sound
         content.categoryIdentifier = NotificationCategory.deadlineWarning
         content.userInfo = [
@@ -293,8 +293,8 @@ final class PingNotificationScheduler: ObservableObject {
     /// "Final reminder: Your ping deadline is now"
     private func scheduleDeadlineFinalReminder(for ping: Ping, sound: UNNotificationSound?) async {
         let content = UNMutableNotificationContent()
-        content.title = "Ping Deadline Now!"
-        content.body = "Final reminder: Your ping deadline is now"
+        content.title = "Pruuf Deadline Now!"
+        content.body = "Final reminder: Your Pruuf deadline is now"
         content.sound = sound
         content.categoryIdentifier = NotificationCategory.deadlineFinal
         content.userInfo = [
@@ -333,8 +333,8 @@ final class PingNotificationScheduler: ObservableObject {
     /// This is for the sender to see they missed it (receiver notifications are sent via backend)
     private func scheduleMissedPingNotification(for ping: Ping, sound: UNNotificationSound?) async {
         let content = UNMutableNotificationContent()
-        content.title = "Ping Missed"
-        content.body = "You missed your ping deadline. You can still submit a late ping."
+        content.title = "Pruuf Missed"
+        content.body = "You missed your Pruuf deadline. You can still submit a late Pruuf."
         content.sound = sound
         content.categoryIdentifier = NotificationCategory.missedPingAlert
         content.userInfo = [
@@ -454,7 +454,7 @@ final class PingNotificationScheduler: ObservableObject {
             userId: receiverId,
             type: .pingCompletedLate,
             title: "Late Check-in Received",
-            body: "\(senderName) pinged late at \(timeFormatter.string(from: completedAt))",
+            body: "\(senderName) sent a late Pruuf at \(timeFormatter.string(from: completedAt))",
             metadata: NotificationMetadata(
                 pingId: pingId,
                 connectionId: connectionId
@@ -480,7 +480,7 @@ final class PingNotificationScheduler: ObservableObject {
         connectionId: UUID,
         lastSeen: Date?
     ) async throws {
-        var body = "\(senderName) missed their ping."
+        var body = "\(senderName) missed their Pruuf."
         if let lastSeen = lastSeen {
             let timeFormatter = DateFormatter()
             timeFormatter.timeStyle = .short
@@ -503,7 +503,7 @@ final class PingNotificationScheduler: ObservableObject {
     }
 
     /// Create notification record for receiver when sender starts a break
-    /// "[Sender Name] is on break until [date]"
+    /// "[Sender Name] is on Pruuf Pause until [date]"
     /// - Parameters:
     ///   - senderName: The name of the sender
     ///   - receiverId: The receiver's user ID
@@ -521,8 +521,8 @@ final class PingNotificationScheduler: ObservableObject {
         let notification = PruufNotificationInsert(
             userId: receiverId,
             type: .breakStarted,
-            title: "Break Started",
-            body: "\(senderName) is on break until \(dateFormatter.string(from: endDate))",
+            title: "Pruuf Pause Started",
+            body: "\(senderName) is on Pruuf Pause until \(dateFormatter.string(from: endDate))",
             metadata: NotificationMetadata(
                 connectionId: connectionId
             )
@@ -600,7 +600,7 @@ final class PingNotificationScheduler: ObservableObject {
 
         // Schedule a snooze notification for 10 minutes from now
         let content = UNMutableNotificationContent()
-        content.title = "Ping Reminder"
+        content.title = "Pruuf Reminder"
         content.body = "Time to complete your check-in!"
         content.sound = soundEnabled ? .default : nil
         content.categoryIdentifier = NotificationCategory.pingReminder

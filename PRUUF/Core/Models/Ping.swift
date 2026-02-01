@@ -122,7 +122,7 @@ enum CompletionMethod: String, Codable {
         case .inPerson:
             return "In Person"
         case .autoBreak:
-            return "On Break"
+            return "On Pruuf Pause"
         }
     }
 }
@@ -163,7 +163,7 @@ enum PingStatus: String, Codable {
         case .missed:
             return "Missed"
         case .onBreak:
-            return "On Break"
+            return "On Pruuf Pause"
         }
     }
 

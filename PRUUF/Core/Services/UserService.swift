@@ -14,12 +14,14 @@ final class UserService: ObservableObject {
 
     // MARK: - Private Properties
 
-    private let database: PostgrestClient
+    private var database: PostgrestClient {
+        SupabaseConfig.client.schema("public")
+    }
 
     // MARK: - Initialization
 
-    nonisolated init(database: PostgrestClient? = nil) {
-        self.database = database ?? SupabaseConfig.client.schema("public")
+    init() {
+        // Database is accessed lazily via computed property to avoid thread-safety issues
     }
 
     // MARK: - User Operations

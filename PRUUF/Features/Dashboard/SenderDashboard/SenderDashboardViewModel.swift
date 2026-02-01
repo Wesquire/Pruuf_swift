@@ -55,6 +55,9 @@ final class SenderDashboardViewModel: NSObject, ObservableObject {
     /// Sender's daily ping time
     @Published private(set) var pingTimeString: String = ""
 
+    /// Sender's unique invitation code (Plan 4 Req 2)
+    @Published private(set) var senderInvitationCode: String?
+
     // MARK: - Private Properties
 
     private let pingService: PingService
@@ -66,6 +69,10 @@ final class SenderDashboardViewModel: NSObject, ObservableObject {
     private var timeUpdateTimer: Timer?
     private var capturedLocation: CLLocation?
     private var locationCompletion: ((CLLocation?) -> Void)?
+
+    /// Tracks the last known calendar day for midnight reset detection
+    /// When day changes, dashboard data is reloaded to reset the "I'm OK" window
+    private var lastKnownDay: Date?
 
     // MARK: - Computed Properties
 
@@ -125,6 +132,7 @@ final class SenderDashboardViewModel: NSObject, ObservableObject {
             Task { @MainActor in
                 self?.updateCurrentTime()
                 self?.updateCountdown()
+                self?.checkForDayChange()
             }
         }
     }
@@ -145,6 +153,27 @@ final class SenderDashboardViewModel: NSObject, ObservableObject {
         countdownString = ping.timeRemainingString
     }
 
+    /// Check if the calendar day has changed (midnight reset)
+    /// If day changed, reload dashboard data to reset the "I'm OK" window
+    /// Only pings in the current calendar day satisfy the daily Pruuf requirement
+    private func checkForDayChange() {
+        let calendar = Calendar.current
+        let currentDay = calendar.startOfDay(for: Date())
+
+        // If we have a lastKnownDay and it's different from currentDay, day has changed
+        if let lastDay = lastKnownDay, lastDay != currentDay {
+            Logger.info("[Midnight Reset] Day changed from \(lastDay) to \(currentDay), reloading dashboard")
+
+            // Day has changed - reload dashboard to reset the "I'm OK" window
+            Task {
+                await loadDashboardData()
+            }
+        }
+
+        // Update lastKnownDay (this also handles initial setup)
+        lastKnownDay = currentDay
+    }
+
     // MARK: - Data Loading
 
     /// Load all dashboard data
@@ -161,11 +190,15 @@ final class SenderDashboardViewModel: NSObject, ObservableObject {
             async let breakTask: () = loadCurrentBreak(userId: userId)
             async let historyTask: () = loadPingHistory(userId: userId)
             async let pingTimeTask: () = loadSenderPingTime(userId: userId)
+            async let invitationCodeTask: () = loadSenderInvitationCode(userId: userId)
 
-            _ = try await (connectionsTask, pingStatusTask, breakTask, historyTask, pingTimeTask)
+            _ = try await (connectionsTask, pingStatusTask, breakTask, historyTask, pingTimeTask, invitationCodeTask)
 
             // Determine today's ping state
             determineTodayPingState()
+
+            // Set lastKnownDay for midnight reset detection
+            lastKnownDay = Calendar.current.startOfDay(for: Date())
 
             // Mark initial load complete
             isInitialLoad = false
@@ -309,6 +342,21 @@ final class SenderDashboardViewModel: NSObject, ObservableObject {
                     pingTimeString = formatter.string(from: date)
                 }
             }
+        }
+    }
+
+    /// Load sender's invitation code (Plan 4 Req 2)
+    private func loadSenderInvitationCode(userId: UUID) async throws {
+        let profiles: [SenderProfile] = try await database
+            .from("sender_profiles")
+            .select("invitation_code")
+            .eq("user_id", value: userId.uuidString)
+            .limit(1)
+            .execute()
+            .value
+
+        if let profile = profiles.first {
+            senderInvitationCode = profile.invitationCode
         }
     }
 
