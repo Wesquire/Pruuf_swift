@@ -50,6 +50,7 @@
 		SCB02024020100000002 /* SenderCodeBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = SCB02024020100000001 /* SenderCodeBadge.swift */; };
 		9EBEBFF029E9502F604F290B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C41599CE8DE6A5551B84222 /* AppDelegate.swift */; };
 		A0681D166FA210D70F0EBF6C /* OnboardingFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83980736708E7CFFABA6CEC6 /* OnboardingFeature.swift */; };
+		D1F2A3B4C5E6F7A8B9C0D1E3 /* DeviceTransferCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F2A3B4C5E6F7A8B9C0D1E2 /* DeviceTransferCodeView.swift */; };
 		A122FB096D87D6358885ACDA /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A8BDC595446E9C8CC12ACB /* NotificationService.swift */; };
 		A5AF3501ECB68A6980DDD997 /* RoleSelectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91E855913B97C1BC8178171E /* RoleSelectionService.swift */; };
 		A5EBFA2FA27FE9F5B1BD3B13 /* AuditLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB6580CBEDB420D3992CEF5 /* AuditLog.swift */; };
@@ -126,6 +127,7 @@
 		743475414BD5B8D4F3910F94 /* ChartsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartsComponents.swift; sourceTree = "<group>"; };
 		7C41599CE8DE6A5551B84222 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		83980736708E7CFFABA6CEC6 /* OnboardingFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFeature.swift; sourceTree = "<group>"; };
+		D1F2A3B4C5E6F7A8B9C0D1E2 /* DeviceTransferCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceTransferCodeView.swift; sourceTree = "<group>"; };
 		8699F3BF552B853F924FE841 /* NotificationCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCenterView.swift; sourceTree = "<group>"; };
 		8C7D6794FA670B839D338043 /* PingNotificationSchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PingNotificationSchedulerTests.swift; sourceTree = "<group>"; };
 		8EE4BCF3A8D0A7314F2222F6 /* SettingsFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsFeature.swift; sourceTree = "<group>"; };
@@ -185,6 +187,7 @@
 		268ADD0147E39ACDE8F07867 /* Onboarding */ = {
 			isa = PBXGroup;
 			children = (
+				D1F2A3B4C5E6F7A8B9C0D1E2 /* DeviceTransferCodeView.swift */,
 				83980736708E7CFFABA6CEC6 /* OnboardingFeature.swift */,
 				E4B56E5D8260FA764CAEB9BD /* ReceiverOnboardingViews.swift */,
 				22217711CE2DA9FE3A91D88C /* SenderOnboardingViews.swift */,
@@ -592,6 +595,7 @@
 				7A9BCD8B56B0F527209D69C3 /* NotificationSettingsView.swift in Sources */,
 				DCFFCAC7644D9CEE2DE5E809 /* NotificationsFeature.swift in Sources */,
 				A0681D166FA210D70F0EBF6C /* OnboardingFeature.swift in Sources */,
+				D1F2A3B4C5E6F7A8B9C0D1E3 /* DeviceTransferCodeView.swift in Sources */,
 				025936252521DFF041ED52CA /* PaymentTransaction.swift in Sources */,
 				B63DF45F41A0090A176B6A69 /* Ping.swift in Sources */,
 				F2BE7BF54B84D79637FB5CCB /* PingNotificationScheduler.swift in Sources */,

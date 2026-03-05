@@ -44,7 +44,6 @@ final class AccountManagementService: ObservableObject {
     /// Add sender role to an existing receiver user
     /// Per plan.md Section 10.2:
     /// - Create sender_profiles record
-    /// - Update users.primary_role to 'both'
     /// - Returns onboarding step to redirect to
     /// - Parameter userId: The user's UUID
     /// - Returns: The onboarding step for sender onboarding
@@ -71,19 +70,7 @@ final class AccountManagementService: ObservableObject {
                 .insert(senderProfileData)
                 .execute()
 
-            // 2. Update users.primary_role to 'both'
-            let roleUpdate = RoleUpdateData(
-                primaryRole: UserRole.both.rawValue,
-                updatedAt: isoFormatter.string(from: now)
-            )
-
-            try await database
-                .from("users")
-                .update(roleUpdate)
-                .eq("id", value: userId.uuidString)
-                .execute()
-
-            // 3. Log audit event
+            // 2. Log audit event
             try await logAuditEvent(
                 userId: userId,
                 action: AuditAction.userUpdated,
@@ -91,13 +78,13 @@ final class AccountManagementService: ObservableObject {
                 resourceId: userId,
                 details: AuditDetails(
                     previousValue: UserRole.receiver.rawValue,
-                    newValue: UserRole.both.rawValue,
+                    newValue: "added_sender_profile",
                     reason: "Added sender role",
                     context: ["action": "add_sender_role"]
                 )
             )
 
-            // 4. Return the first sender onboarding step
+            // 3. Return the first sender onboarding step
             return .senderPingTime
         } catch {
             let wrappedError = AccountManagementError.roleAddFailed(error.localizedDescription)
@@ -110,7 +97,6 @@ final class AccountManagementService: ObservableObject {
     /// Per plan.md Section 10.2:
     /// - Create receiver_profiles record
     /// - Start 15-day trial for receiver role
-    /// - Update users.primary_role to 'both'
     /// - Generate unique code for receiver
     /// - Returns onboarding step to redirect to
     /// - Parameter userId: The user's UUID
@@ -140,19 +126,7 @@ final class AccountManagementService: ObservableObject {
                 .insert(receiverProfileData)
                 .execute()
 
-            // 2. Update users.primary_role to 'both'
-            let roleUpdate = RoleUpdateData(
-                primaryRole: UserRole.both.rawValue,
-                updatedAt: isoFormatter.string(from: now)
-            )
-
-            try await database
-                .from("users")
-                .update(roleUpdate)
-                .eq("id", value: userId.uuidString)
-                .execute()
-
-            // 3. Generate unique code for receiver
+            // 2. Generate unique code for receiver
             var uniqueCode: String? = nil
             do {
                 let response: PostgrestResponse<String> = try await database
@@ -164,7 +138,7 @@ final class AccountManagementService: ObservableObject {
                 print("[AccountManagementService] Code generation failed: \(error)")
             }
 
-            // 4. Log audit event
+            // 3. Log audit event
             try await logAuditEvent(
                 userId: userId,
                 action: AuditAction.userUpdated,
@@ -172,7 +146,7 @@ final class AccountManagementService: ObservableObject {
                 resourceId: userId,
                 details: AuditDetails(
                     previousValue: UserRole.sender.rawValue,
-                    newValue: UserRole.both.rawValue,
+                    newValue: "added_receiver_profile",
                     reason: "Added receiver role with 15-day trial",
                     context: [
                         "action": "add_receiver_role",
@@ -181,7 +155,7 @@ final class AccountManagementService: ObservableObject {
                 )
             )
 
-            // 5. Return the first receiver onboarding step and code
+            // 4. Return the first receiver onboarding step and code
             return (.receiverCode, uniqueCode)
         } catch {
             let wrappedError = AccountManagementError.roleAddFailed(error.localizedDescription)

@@ -42,8 +42,8 @@ struct OnboardingBackButton: View {
 /// Steps in the sender onboarding flow
 enum SenderOnboardingFlowStep: Int, CaseIterable {
     case tutorial = 0
-    case pingTime = 1
-    case connections = 2
+    case connections = 1
+    case pingTime = 2
     case notifications = 3
     case complete = 4
 
@@ -244,9 +244,6 @@ struct PingTimeSelectionView: View {
     /// Callback when user taps back button
     var onBack: (() -> Void)?
 
-    /// Grace period in minutes (fixed at 60)
-    private let gracePeriodMinutes = 60
-
     init(defaultTime: Date? = nil, onContinue: @escaping (Date) -> Void, onBack: (() -> Void)? = nil) {
         // Default to 9:00 AM in user's local time
         let calendar = Calendar.current
@@ -267,23 +264,11 @@ struct PingTimeSelectionView: View {
         self.onBack = onBack
     }
 
-    /// Calculate deadline based on selected time + grace period
-    private var deadlineTime: Date {
-        Calendar.current.date(byAdding: .minute, value: gracePeriodMinutes, to: selectedTime) ?? selectedTime
-    }
-
     /// Format time for display
     private var formattedSelectedTime: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
         return formatter.string(from: selectedTime)
-    }
-
-    /// Format deadline time for display
-    private var formattedDeadlineTime: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter.string(from: deadlineTime)
     }
 
     var body: some View {
@@ -294,7 +279,7 @@ struct PingTimeSelectionView: View {
                     .font(.title2.bold())
                     .multilineTextAlignment(.center)
 
-                Text("Choose a time each day when you'll send your Pruuf. Log in before this time to notify your loved ones that you're okay. They'll receive a notification when you ping—and another if you haven't pinged by your Daily Ping Time.")
+                Text("Choose a time each day when you'll send your Pruuf. Log in before this time to notify your loved ones that you're okay. Your receivers will be notified immediately if you haven't sent your Pruuf by this time.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -317,22 +302,19 @@ struct PingTimeSelectionView: View {
             .clipped()
             .compositingGroup()
 
-            // Grace Period Explanation
+            // Notification Info
             VStack(spacing: 8) {
                 HStack(spacing: 4) {
-                    Image(systemName: "clock.badge.checkmark")
+                    Image(systemName: "bell.badge")
                         .foregroundStyle(.blue)
-                    Text("Grace Period")
+                    Text("How It Works")
                         .font(.subheadline.bold())
                 }
 
-                Text("You'll have until \(formattedDeadlineTime) to check in")
+                Text("Your receivers will be notified immediately if you haven't sent your Pruuf by this time.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-
-                Text("(\(gracePeriodMinutes)-minute grace period)")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
             }
             .padding(16)
             .background(
@@ -833,10 +815,10 @@ class ConnectionInvitationViewModel: ObservableObject {
         return "\(senderName) wants to send you daily Pruufs on PRUUF to let you know they're safe. Download the app and use code \(code) to connect: https://pruuf.app/join"
     }
 
-    /// Generate a temporary 6-digit invite code
+    /// Generate a temporary 5-digit invite code
     private func generateTemporaryInviteCode() -> String {
         let digits = "0123456789"
-        return String((0..<6).map { _ in digits.randomElement()! })
+        return String((0..<5).map { _ in digits.randomElement()! })
     }
 
     /// Send invitations to all selected contacts
@@ -1402,8 +1384,21 @@ struct SenderOnboardingCoordinatorView: View {
             switch currentStep {
             case .tutorial:
                 SenderTutorialView(
-                    onComplete: { moveToStep(.pingTime) },
-                    onSkip: { moveToStep(.pingTime) }
+                    onComplete: { moveToStep(.connections) },
+                    onSkip: { moveToStep(.connections) }
+                )
+
+            case .connections:
+                ConnectionInvitationView(
+                    onContinue: { count in
+                        connectionsInvited = count
+                        moveToStep(.pingTime)
+                    },
+                    onSkip: {
+                        connectionsInvited = 0
+                        moveToStep(.pingTime)
+                    },
+                    onBack: { moveToPreviousStep() }
                 )
 
             case .pingTime:
@@ -1413,19 +1408,6 @@ struct SenderOnboardingCoordinatorView: View {
                         Task {
                             await savePingTime(time)
                         }
-                        moveToStep(.connections)
-                    },
-                    onBack: { moveToPreviousStep() }
-                )
-
-            case .connections:
-                ConnectionInvitationView(
-                    onContinue: { count in
-                        connectionsInvited = count
-                        moveToStep(.notifications)
-                    },
-                    onSkip: {
-                        connectionsInvited = 0
                         moveToStep(.notifications)
                     },
                     onBack: { moveToPreviousStep() }
@@ -1468,10 +1450,10 @@ struct SenderOnboardingCoordinatorView: View {
         switch startingStep {
         case .senderTutorial:
             currentStep = .tutorial
-        case .senderPingTime:
-            currentStep = .pingTime
         case .senderConnections:
             currentStep = .connections
+        case .senderPingTime:
+            currentStep = .pingTime
         case .senderNotifications:
             currentStep = .notifications
         case .senderComplete:
@@ -1507,12 +1489,12 @@ struct SenderOnboardingCoordinatorView: View {
             case .tutorial:
                 // Can't go back from tutorial
                 break
-            case .pingTime:
-                currentStep = .tutorial
             case .connections:
-                currentStep = .pingTime
-            case .notifications:
+                currentStep = .tutorial
+            case .pingTime:
                 currentStep = .connections
+            case .notifications:
+                currentStep = .pingTime
             case .complete:
                 currentStep = .notifications
             }

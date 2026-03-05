@@ -6,7 +6,7 @@ import Supabase
 // This module handles subscription/payment via App Store (StoreKit 2)
 // Per plan.md Section 9.1:
 // - Product ID: com.pruuf.receiver.monthly
-// - Price: $2.99 USD/month
+// - Price: $4.99 USD/month
 // - 15-day free trial for all receivers
 // - No credit card required to start trial
 // - Auto-renewable subscription managed through App Store
@@ -687,7 +687,7 @@ struct SubscriptionRequiredView: View {
                 .padding(.horizontal)
 
             VStack(spacing: 12) {
-                Text("$2.99/month")
+                Text("$4.99/month")
                     .font(.title)
                     .fontWeight(.bold)
 

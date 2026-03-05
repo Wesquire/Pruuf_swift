@@ -102,7 +102,7 @@ struct ReceiverDashboardView: View {
         .alert("How to Use Your Code", isPresented: $showCodeInfo) {
             Button("Got it!", role: .cancel) { }
         } message: {
-            Text("Share this 6-digit code with people who want to send you daily check-ins. They'll enter this code in their PRUUF app to connect with you.")
+            Text("Share this 5-digit code with people who want to send you daily check-ins. They'll enter this code in their PRUUF app to connect with you.")
         }
         .alert("Error", isPresented: .init(
             get: { viewModel.errorMessage != nil },
@@ -406,7 +406,7 @@ struct ReceiverDashboardView: View {
                 .foregroundColor(.green)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("$2.99/month")
+                Text("$4.99/month")
                     .font(.headline)
                     .foregroundColor(.primary)
 

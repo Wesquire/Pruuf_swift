@@ -9,7 +9,7 @@ enum ConnectionsFeature {}
 
 // MARK: - Add Connection View (Sender connects to Receiver)
 
-/// View for senders to connect to receivers using a 6-digit code
+/// View for senders to connect to receivers using a 5-digit code
 /// Flow:
 /// 1. Sender taps "+ Add Receiver" from dashboard
 /// 2. Show "Connect to Receiver" screen
@@ -77,7 +77,7 @@ struct AddConnectionView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
 
-                Text("Ask them for their 6-digit PRUUF code")
+                Text("Ask them for their 5-digit PRUUF code")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -108,7 +108,7 @@ struct AddConnectionView: View {
     private var codeEntrySection: some View {
         VStack(spacing: 8) {
             HStack(spacing: 12) {
-                ForEach(0..<6, id: \.self) { index in
+                ForEach(0..<5, id: \.self) { index in
                     digitBox(at: index)
                 }
             }
@@ -121,9 +121,9 @@ struct AddConnectionView: View {
                 .opacity(0.01)
                 .frame(width: 1, height: 1)
                 .onChange(of: viewModel.code) { newValue in
-                    // Limit to 6 digits
-                    if newValue.count > 6 {
-                        viewModel.code = String(newValue.prefix(6))
+                    // Limit to 5 digits
+                    if newValue.count > 5 {
+                        viewModel.code = String(newValue.prefix(5))
                     }
                     // Filter non-numeric characters
                     viewModel.code = newValue.filter { $0.isNumber }
@@ -318,7 +318,7 @@ class AddConnectionViewModel: ObservableObject {
     // MARK: - Computed Properties
 
     var canConnect: Bool {
-        code.count == 6 && connectionState != .connecting
+        code.count == 5 && connectionState != .connecting
     }
 
     // MARK: - Initialization
@@ -340,15 +340,15 @@ class AddConnectionViewModel: ObservableObject {
         return String(code[codeIndex])
     }
 
-    /// Check clipboard for a 6-digit code
+    /// Check clipboard for a 5-digit code
     func checkClipboardForCode() {
         guard let clipboardString = UIPasteboard.general.string else { return }
 
         // Clean the clipboard content
         let cleaned = clipboardString.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Check if it's a 6-digit code
-        if cleaned.count == 6, cleaned.allSatisfy({ $0.isNumber }) {
+        // Check if it's a 5-digit code
+        if cleaned.count == 5, cleaned.allSatisfy({ $0.isNumber }) {
             clipboardCode = cleaned
         }
     }
@@ -373,7 +373,7 @@ class AddConnectionViewModel: ObservableObject {
 
         do {
             // Use ConnectionService to create connection
-            let connection = try await connectionService.createConnection(senderId: userId, withCode: code)
+            let connection = try await connectionService.createConnection(connectingUserId: userId, withCode: code, connectingRole: .sender)
 
             // Get receiver name for success message
             connectedReceiverName = connection.receiver?.displayName ?? "Receiver"
@@ -517,8 +517,8 @@ class AddConnectionViewModel: ObservableObject {
         }
 
         // Only create ping if scheduled time is in the future (or within deadline window)
-        // Grace period is 60 minutes
-        let deadlineTime = scheduledTime.addingTimeInterval(60 * 60)
+        // Deadline = scheduled time (no grace period)
+        let deadlineTime = scheduledTime
 
         // Only create if deadline is in the future
         guard deadlineTime > Date() else { return }
@@ -708,7 +708,7 @@ struct ConnectToSenderView: View {
     private var codeEntrySection: some View {
         VStack(spacing: 8) {
             HStack(spacing: 12) {
-                ForEach(0..<6, id: \.self) { index in
+                ForEach(0..<5, id: \.self) { index in
                     digitBox(at: index)
                 }
             }
@@ -720,8 +720,8 @@ struct ConnectToSenderView: View {
                 .opacity(0.01)
                 .frame(width: 1, height: 1)
                 .onChange(of: viewModel.code) { newValue in
-                    if newValue.count > 6 {
-                        viewModel.code = String(newValue.prefix(6))
+                    if newValue.count > 5 {
+                        viewModel.code = String(newValue.prefix(5))
                     }
                     viewModel.code = newValue.filter { $0.isNumber }
                 }
@@ -887,7 +887,7 @@ class ConnectToSenderViewModel: ObservableObject {
     private let authService: AuthService
 
     var canConnect: Bool {
-        code.count == 6 && connectionState != .connecting
+        code.count == 5 && connectionState != .connecting
     }
 
     init(authService: AuthService) {
@@ -903,7 +903,7 @@ class ConnectToSenderViewModel: ObservableObject {
     func checkClipboardForCode() {
         guard let clipboardString = UIPasteboard.general.string else { return }
         let cleaned = clipboardString.trimmingCharacters(in: .whitespacesAndNewlines)
-        if cleaned.count == 6, cleaned.allSatisfy({ $0.isNumber }) {
+        if cleaned.count == 5, cleaned.allSatisfy({ $0.isNumber }) {
             clipboardCode = cleaned
         }
     }
@@ -995,8 +995,8 @@ class ConnectToSenderViewModel: ObservableObject {
             var connection: Connection
 
             if let existing = existingConnections.first {
-                if existing.status == .deleted {
-                    // EC-5.3: Reactivate deleted connection
+                if existing.status == .deleted || existing.status == .pending {
+                    // Reactivate deleted or pending connection
                     let update = ConnectionStatusUpdate(
                         status: ConnectionStatus.active.rawValue,
                         updatedAt: ISO8601DateFormatter().string(from: Date())

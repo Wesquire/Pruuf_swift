@@ -139,7 +139,7 @@ enum AppTypography {
 
     // MARK: Code/Monospace (SF Mono)
 
-    /// Monospace for codes - 32pt Medium (for 6-digit codes)
+    /// Monospace for codes - 32pt Medium (for 5-digit codes)
     static let codeDisplay = Font.system(size: 32, weight: .medium, design: .monospaced)
 
     /// Monospace for codes - 40pt Medium (large display)

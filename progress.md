@@ -11152,3 +11152,10 @@ All connection management edge cases implemented:
 ## [2026-01-19 14:21:56]
 ### ✓ Phase 5 Section 5.3: User Stories Connection Management Complete
 
+
+## [2026-02-16 00:00:00]
+### Section 7.3: Remove Dual-Role Dashboard from DashboardFeature.swift
+- Completed: Removed DualRoleDashboardView struct and its MARK comment (was already removed by prior edit)
+- Completed: Removed dual-role comments from handleNotificationNavigation switch cases (.senderDashboard and .receiverDashboard)
+- Confirmed: No `case .both:` existed in DashboardCoordinatorView switch (already clean)
+- Modified: PRUUF/Features/Dashboard/DashboardFeature.swift

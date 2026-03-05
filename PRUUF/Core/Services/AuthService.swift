@@ -34,6 +34,9 @@ final class AuthService: ObservableObject {
     /// Pending verification phone number
     @Published private(set) var pendingVerificationPhone: String?
 
+    /// Pending display name entered during phone entry
+    @Published var pendingDisplayName: String?
+
     // MARK: - Private Properties
 
     private let auth: AuthClient
@@ -47,6 +50,9 @@ final class AuthService: ObservableObject {
 
     /// Key for storing pending verification phone
     private static let pendingVerificationPhoneKey = "com.pruuf.pendingVerificationPhone"
+
+    /// Key for storing the authenticated user's phone number persistently
+    private static let authenticatedPhoneKey = "com.pruuf.authenticatedPhone"
 
     /// Session expiry duration: 30 days in seconds
     private static let sessionExpiryDuration: TimeInterval = 30 * 24 * 60 * 60
@@ -226,12 +232,17 @@ final class AuthService: ObservableObject {
 
             self.currentUser = response.user
             self.isAuthenticated = true
-            self.pendingVerificationPhone = nil
             self.isLoading = false
+
+            // Persist phone BEFORE post-auth flow so it survives failures and app restarts
+            UserDefaults.standard.set(storedPhone, forKey: Self.authenticatedPhoneKey)
 
             // Handle post-authentication flow (create/fetch user, check onboarding)
             // This is wrapped in its own do-catch to prevent crashes
             await handlePostAuthenticationFlow(authUser: response.user, phoneNumber: storedPhone)
+
+            // Only clear pending phone after successful post-auth
+            self.pendingVerificationPhone = nil
         } catch {
             self.isLoading = false
             print("Authentication error: \(error.localizedDescription)")
@@ -340,18 +351,27 @@ final class AuthService: ObservableObject {
         self.authState = .needsOnboarding
 
         do {
-            // Get phone number from auth user if not provided
-            let phone = phoneNumber ?? authUser.phone ?? ""
+            // Get phone number: explicit param > auth metadata > persisted from last auth > empty
+            let phone = phoneNumber
+                ?? authUser.phone
+                ?? UserDefaults.standard.string(forKey: Self.authenticatedPhoneKey)
+                ?? ""
 
             // Fetch or create the PRUUF user record with a timeout to prevent hanging
             let pruufUser = try await withTimeout(seconds: 10) {
                 try await self.userService.fetchOrCreateUser(
                     authId: authUser.id,
-                    phoneNumber: phone
+                    phoneNumber: phone,
+                    displayName: self.pendingDisplayName
                 )
             }
 
             self.currentPruufUser = pruufUser
+
+            // Persist phone for future app launches (anonymous auth loses phone metadata)
+            if !pruufUser.phoneNumber.isEmpty {
+                UserDefaults.standard.set(pruufUser.phoneNumber, forKey: Self.authenticatedPhoneKey)
+            }
 
             // Check onboarding status and set appropriate state
             if pruufUser.hasCompletedOnboarding {
@@ -360,10 +380,9 @@ final class AuthService: ObservableObject {
             }
             // If not completed, state is already set to needsOnboarding
         } catch {
-            // Log the error but don't fail authentication
-            // User is authenticated, but we couldn't fetch/create their record
+            // Log the error but don't force sign out — let user retry from onboarding
             print("Error in post-authentication flow: \(error.localizedDescription)")
-            // State is already set to needsOnboarding above, so user can proceed
+            // State remains .needsOnboarding so user can proceed to role selection
         }
     }
 
@@ -403,6 +422,7 @@ final class AuthService: ObservableObject {
         self.pendingVerificationPhone = nil
         clearLastActivityTimestamp()
         clearVerificationData()
+        UserDefaults.standard.removeObject(forKey: Self.authenticatedPhoneKey)
         userService.clearCurrentUser()
     }
 

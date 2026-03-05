@@ -72,10 +72,13 @@ struct InviteReceiversFlowView: View {
     @State private var showSMSComposer = false
     @State private var showConfirmation = false
 
-    private let invitationService: InvitationService
+    private var invitationService: InvitationService {
+        _invitationService ?? InvitationService.shared
+    }
+    private let _invitationService: InvitationService?
 
-    init(authService: AuthService, invitationService: InvitationService = .shared) {
-        self.invitationService = invitationService
+    init(authService: AuthService, invitationService: InvitationService? = nil) {
+        self._invitationService = invitationService
     }
 
     var body: some View {

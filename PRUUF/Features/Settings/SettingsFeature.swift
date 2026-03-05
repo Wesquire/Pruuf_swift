@@ -10,7 +10,7 @@ enum SettingsFeature {
     // Views implemented:
     // - SettingsView - Main settings hub with all 7 sections
     //   1. Account - Phone, timezone, role, delete account
-    //   2. Ping Settings (Senders) - Time picker, grace period, enable/disable, breaks
+    //   2. Ping Settings (Senders) - Time picker, enable/disable, breaks
     //   3. Notifications - Master toggle, all notification types
     //   4. Subscription (Receivers) - Status, billing, subscribe, restore
     //   5. Connections - View connections, PRUUF code
@@ -44,7 +44,6 @@ final class SettingsViewModel: ObservableObject {
     @Published var pingTime: Date = Date()
     @Published var pingTimeString: String = "09:00"
     @Published var pingEnabled: Bool = true
-    @Published var gracePeriod: Int = 60
 
     // Subscription
     @Published var subscriptionStatus: SubscriptionStatus = .trial
@@ -98,22 +97,30 @@ final class SettingsViewModel: ObservableObject {
         authService.currentPruufUser?.id
     }
 
+    /// Whether user has sender capabilities (based on primary role or having a sender profile)
     var isSender: Bool {
         guard let role = userRole else { return false }
-        return role == .sender || role == .both
+        return role == .sender || hasSenderProfile
     }
 
+    /// Whether user has receiver capabilities (based on primary role or having a receiver profile)
     var isReceiver: Bool {
         guard let role = userRole else { return false }
-        return role == .receiver || role == .both
+        return role == .receiver || hasReceiverProfile
     }
 
+    /// Whether user has a sender profile (loaded from database)
+    @Published var hasSenderProfile: Bool = false
+
+    /// Whether user has a receiver profile (loaded from database)
+    @Published var hasReceiverProfile: Bool = false
+
     var canAddSenderRole: Bool {
-        userRole == .receiver
+        !hasSenderProfile
     }
 
     var canAddReceiverRole: Bool {
-        userRole == .sender
+        !hasReceiverProfile
     }
 
     var displayPhoneNumber: String {
@@ -158,6 +165,9 @@ final class SettingsViewModel: ObservableObject {
         // Load user data
         loadUserData()
 
+        // Check profile existence to determine capabilities
+        await loadProfileExistence(userId: userId)
+
         // Load ping settings if sender
         if isSender {
             await loadPingSettings(userId: userId)
@@ -171,6 +181,34 @@ final class SettingsViewModel: ObservableObject {
 
         // Load connections count
         await loadConnectionsCount(userId: userId)
+    }
+
+    private func loadProfileExistence(userId: UUID) async {
+        do {
+            let senderProfiles: [SenderProfile] = try await SupabaseConfig.client.schema("public")
+                .from("sender_profiles")
+                .select()
+                .eq("user_id", value: userId.uuidString)
+                .limit(1)
+                .execute()
+                .value
+            hasSenderProfile = !senderProfiles.isEmpty
+        } catch {
+            print("[SettingsViewModel] Failed to check sender profile: \(error)")
+        }
+
+        do {
+            let receiverProfiles: [ReceiverProfile] = try await SupabaseConfig.client.schema("public")
+                .from("receiver_profiles")
+                .select()
+                .eq("user_id", value: userId.uuidString)
+                .limit(1)
+                .execute()
+                .value
+            hasReceiverProfile = !receiverProfiles.isEmpty
+        } catch {
+            print("[SettingsViewModel] Failed to check receiver profile: \(error)")
+        }
     }
 
     private func loadPingSettings(userId: UUID) async {
@@ -315,7 +353,6 @@ final class SettingsViewModel: ObservableObject {
     /// Add sender role to existing receiver
     /// Per Section 10.2:
     /// - Creates sender_profiles record
-    /// - Updates users.primary_role to 'both'
     /// - Redirects to role-specific onboarding
     func addSenderRole() async {
         guard let userId = userId else { return }
@@ -326,7 +363,7 @@ final class SettingsViewModel: ObservableObject {
             // Use AccountManagementService for proper role addition
             let onboardingStep = try await accountManagementService.addSenderRole(userId: userId)
 
-            userRole = .both
+            hasSenderProfile = true
             showAddRoleSheet = false
 
             // Set up navigation to role-specific onboarding
@@ -345,7 +382,6 @@ final class SettingsViewModel: ObservableObject {
     /// Per Section 10.2:
     /// - Creates receiver_profiles record
     /// - Starts 15-day trial for receiver role
-    /// - Updates users.primary_role to 'both'
     /// - Generates unique code
     /// - Redirects to role-specific onboarding
     func addReceiverRole() async {
@@ -357,7 +393,7 @@ final class SettingsViewModel: ObservableObject {
             // Use AccountManagementService for proper role addition with trial
             let (onboardingStep, uniqueCode) = try await accountManagementService.addReceiverRole(userId: userId)
 
-            userRole = .both
+            hasReceiverProfile = true
             newReceiverCode = uniqueCode
             showAddRoleSheet = false
 
@@ -941,19 +977,23 @@ struct SettingsView: View {
     }
 
     private var roleIconName: String {
+        if viewModel.hasSenderProfile && viewModel.hasReceiverProfile {
+            return "arrow.up.arrow.down.circle.fill"
+        }
         switch viewModel.userRole {
         case .sender: return "arrow.up.circle.fill"
         case .receiver: return "arrow.down.circle.fill"
-        case .both: return "arrow.up.arrow.down.circle.fill"
         case nil: return "person.circle.fill"
         }
     }
 
     private var roleDisplayName: String {
+        if viewModel.hasSenderProfile && viewModel.hasReceiverProfile {
+            return "Sender & Receiver"
+        }
         switch viewModel.userRole {
         case .sender: return "Sender"
         case .receiver: return "Receiver"
-        case .both: return "Sender & Receiver"
         case nil: return "Not Set"
         }
     }
@@ -1003,7 +1043,7 @@ struct SettingsView: View {
         } header: {
             Text("Pruuf Settings")
         } footer: {
-            Text("You have a 60-minute grace period after your scheduled time to complete your check-in.")
+            Text("Your receivers will be notified immediately if you haven't sent your Pruuf by this time.")
         }
     }
 
@@ -1563,7 +1603,7 @@ struct SettingsView: View {
 
                 if !viewModel.canAddSenderRole {
                     // Receiver pricing info
-                    Text("Includes a 15-day free trial, then $2.99/month")
+                    Text("Includes a 15-day free trial, then $4.99/month")
                         .font(.subheadline)
                         .foregroundColor(.orange)
                         .padding(.horizontal, 32)

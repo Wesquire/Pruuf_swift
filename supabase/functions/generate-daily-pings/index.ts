@@ -180,11 +180,9 @@ function calculateScheduledTime(pingTimeLocal: string, targetDate: Date, senderT
   }
 }
 
-// Calculate deadline as scheduled_time + 90 minutes
+// Deadline = scheduled time (no grace period)
 function calculateDeadline(scheduledTime: Date): Date {
-  const deadline = new Date(scheduledTime);
-  deadline.setMinutes(deadline.getMinutes() + 90);
-  return deadline;
+  return new Date(scheduledTime);
 }
 
 serve(async (req) => {

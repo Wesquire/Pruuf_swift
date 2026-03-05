@@ -1,6 +1,10 @@
 // Edge Function: check-missed-pings
 // Scheduled function to check for missed pings and trigger notifications
 // This function is called via pg_cron or Supabase scheduled functions
+//
+// No grace period: deadline = scheduled time
+// Receivers are notified IMMEDIATELY when Pruuf time passes without check-in
+// A SECOND notification comes 60 minutes later if sender STILL hasn't sent
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -10,15 +14,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface UserPingStatus {
-  user_id: string;
-  display_name: string;
-  phone: string;
-  ping_window_start: string;
-  ping_window_end: string;
-  timezone: string;
-  last_ping_at: string | null;
-}
+// Second notification delay in minutes
+const FOLLOWUP_NOTIFICATION_MINUTES = 60;
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -37,7 +34,7 @@ serve(async (req) => {
     const today = now.toISOString().split("T")[0];
 
     // Find users who should have pinged but haven't
-    // Query users with active subscriptions and ping schedules
+    // Query users with active ping schedules
     const { data: usersToCheck, error: queryError } = await supabaseClient
       .from("users")
       .select(`
@@ -48,7 +45,6 @@ serve(async (req) => {
         ping_schedules!inner (
           ping_window_start,
           ping_window_end,
-          grace_period_minutes,
           is_active
         )
       `)
@@ -59,6 +55,7 @@ serve(async (req) => {
     }
 
     const missedPingUsers: string[] = [];
+    const followupUsers: string[] = [];
     const remindUsers: string[] = [];
 
     for (const user of usersToCheck || []) {
@@ -69,9 +66,8 @@ serve(async (req) => {
       const userNow = new Date(now.toLocaleString("en-US", { timeZone: userTimezone }));
       const currentTime = userNow.toTimeString().slice(0, 5); // HH:MM format
 
-      // Check if we're past the ping window end + grace period
+      // Deadline = scheduled ping window end (no grace period)
       const windowEnd = schedule.ping_window_end;
-      const gracePeriod = schedule.grace_period_minutes || 30;
 
       // Check if user has pinged today
       const { data: todaysPing, error: pingError } = await supabaseClient
@@ -90,13 +86,20 @@ serve(async (req) => {
       const hasPingedToday = !!todaysPing;
 
       if (!hasPingedToday) {
-        // Calculate if we're past the window + grace period
+        // No grace period: check if we're past the scheduled time
         const [endHour, endMin] = windowEnd.split(":").map(Number);
-        const windowEndWithGrace = new Date(userNow);
-        windowEndWithGrace.setHours(endHour, endMin + gracePeriod, 0, 0);
+        const scheduledEnd = new Date(userNow);
+        scheduledEnd.setHours(endHour, endMin, 0, 0);
 
-        if (userNow > windowEndWithGrace) {
-          // User has missed their ping window
+        // Calculate followup time (scheduled time + 60 minutes)
+        const followupTime = new Date(scheduledEnd);
+        followupTime.setMinutes(followupTime.getMinutes() + FOLLOWUP_NOTIFICATION_MINUTES);
+
+        if (userNow > followupTime) {
+          // Past scheduled time + 60 minutes: trigger second (followup) notification
+          followupUsers.push(user.id);
+        } else if (userNow > scheduledEnd) {
+          // Past scheduled time but within 60 minutes: first missed notification
           missedPingUsers.push(user.id);
         } else if (currentTime >= schedule.ping_window_start && currentTime <= windowEnd) {
           // User is in their ping window but hasn't pinged - send reminder
@@ -105,8 +108,23 @@ serve(async (req) => {
       }
     }
 
-    // Process missed pings
+    // Process missed pings (immediate notification at scheduled time)
     for (const userId of missedPingUsers) {
+      // Check if we've already sent the first missed notification today
+      const { data: existingMissedNotification } = await supabaseClient
+        .from("notifications")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("type", "ping_missed")
+        .gte("created_at", `${today}T00:00:00Z`)
+        .limit(1)
+        .single();
+
+      if (existingMissedNotification) {
+        // Already notified, skip
+        continue;
+      }
+
       // Record missed ping
       const { error: insertError } = await supabaseClient
         .from("pings")
@@ -122,17 +140,8 @@ serve(async (req) => {
         continue;
       }
 
-      // Get user's last ping time for the notification
-      const { data: lastPing } = await supabaseClient
-        .from("pings")
-        .select("completed_at")
-        .eq("sender_id", userId)
-        .eq("status", "completed")
-        .order("completed_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      // Trigger notification to connected receivers
+      // Trigger IMMEDIATE notification to connected receivers
+      // "[Sender] hasn't sent their Pruuf yet."
       const notifyResponse = await fetch(
         `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ping-notification`,
         {
@@ -145,7 +154,7 @@ serve(async (req) => {
             type: "ping_missed",
             sender_id: userId,
             additional_data: {
-              last_seen: lastPing?.completed_at || null,
+              notification_variant: "immediate",
             },
           }),
         }
@@ -153,6 +162,48 @@ serve(async (req) => {
 
       if (!notifyResponse.ok) {
         console.error(`Failed to send missed ping notification for ${userId}`);
+      }
+    }
+
+    // Process followup notifications (60 minutes after scheduled time, sender still hasn't sent)
+    for (const userId of followupUsers) {
+      // Check if we've already sent the followup notification today
+      const { data: existingFollowup } = await supabaseClient
+        .from("notifications")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("type", "ping_missed_followup")
+        .gte("created_at", `${today}T00:00:00Z`)
+        .limit(1)
+        .single();
+
+      if (existingFollowup) {
+        // Already sent followup, skip
+        continue;
+      }
+
+      // Trigger SECOND notification to connected receivers
+      // "[Sender] still hasn't sent their Pruuf. It's been 60 minutes past their check-in time."
+      const notifyResponse = await fetch(
+        `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ping-notification`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({
+            type: "ping_missed_followup",
+            sender_id: userId,
+            additional_data: {
+              notification_variant: "followup_60min",
+            },
+          }),
+        }
+      );
+
+      if (!notifyResponse.ok) {
+        console.error(`Failed to send followup missed ping notification for ${userId}`);
       }
     }
 
@@ -183,6 +234,7 @@ serve(async (req) => {
     const result = {
       checked: usersToCheck?.length || 0,
       missed: missedPingUsers.length,
+      followups: followupUsers.length,
       reminded: remindUsers.length,
       timestamp: now.toISOString(),
     };

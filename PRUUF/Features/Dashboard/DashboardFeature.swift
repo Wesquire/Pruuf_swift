@@ -10,7 +10,6 @@ enum DashboardFeature {
     // Views:
     // - SenderDashboardView (implemented)
     // - ReceiverDashboardView (Phase 4.2)
-    // - DualRoleDashboardView (Phase 4.3)
 }
 
 // MARK: - Main Dashboard Coordinator
@@ -27,32 +26,12 @@ struct DashboardCoordinatorView: View {
                     SenderDashboardView(authService: authService)
                 case .receiver:
                     ReceiverDashboardView(authService: authService)
-                case .both:
-                    DualRoleDashboardView(authService: authService)
                 }
             } else {
                 // Default to sender dashboard if role not set
                 SenderDashboardView(authService: authService)
             }
         }
-    }
-}
-
-// MARK: - Dual Role Dashboard View
-
-/// Dashboard for users with both sender and receiver roles (Phase 4.3)
-/// Simplified to show only sender dashboard (Their Pruufs tab removed per Requirement 11)
-struct DualRoleDashboardView: View {
-    let authService: AuthService
-
-    init(authService: AuthService) {
-        self.authService = authService
-    }
-
-    var body: some View {
-        // Simplified to single view - only showing sender dashboard
-        // Receiver features accessible via separate tab or navigation if needed
-        SenderDashboardView(authService: authService)
     }
 }
 
@@ -98,7 +77,7 @@ struct SubscriptionRequiredSheet: View {
 
                 // Price
                 VStack(spacing: 4) {
-                    Text("$2.99/month")
+                    Text("$4.99/month")
                         .font(.title2)
                         .fontWeight(.bold)
 
@@ -247,14 +226,12 @@ struct MainTabView: View {
         // Process destination
         switch destination {
         case .senderDashboard:
-            // Navigate to sender dashboard (Home tab, sender view)
+            // Navigate to sender dashboard (Home tab)
             selectedTab = 0
-            // If dual role, need to signal sender tab selection
 
         case .receiverDashboard:
-            // Navigate to receiver dashboard (Home tab, receiver view)
+            // Navigate to receiver dashboard (Home tab)
             selectedTab = 0
-            // If dual role, need to signal receiver tab selection
 
         case .senderActivity(let senderId):
             // Navigate to sender activity view

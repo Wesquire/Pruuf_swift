@@ -84,7 +84,7 @@ final class RoleSelectionService: ObservableObject {
     ///   - role: The role to add (sender or receiver)
     ///   - userId: The user's UUID
     ///   - phoneNumber: The user's phone number (for user creation if needed)
-    /// - Returns: The updated user with both roles
+    /// - Returns: The updated user with the secondary profile created
     func addSecondRole(_ role: UserRole, for userId: UUID, phoneNumber: String? = nil) async throws -> PruufUser {
         guard role == .sender || role == .receiver else {
             throw RoleSelectionError.invalidRole("Can only add sender or receiver role")
@@ -97,19 +97,16 @@ final class RoleSelectionService: ObservableObject {
         do {
             // First, ensure the user exists in the users table
             let phone = phoneNumber ?? ""
-            _ = try await userService.fetchOrCreateUser(authId: userId, phoneNumber: phone)
+            let existingUser = try await userService.fetchOrCreateUser(authId: userId, phoneNumber: phone)
 
-            // Update user's primary role to 'both'
-            let updatedUser = try await updateUserPrimaryRole(userId: userId, role: .both)
-
-            // Create the appropriate profile
+            // Create the appropriate profile (don't change primary_role)
             if role == .sender {
                 try await createSenderProfile(for: userId)
             } else {
                 try await createReceiverProfile(for: userId)
             }
 
-            return updatedUser
+            return existingUser
         } catch let roleError as RoleSelectionError {
             self.error = roleError
             throw roleError
@@ -128,7 +125,7 @@ final class RoleSelectionService: ObservableObject {
     func createSenderProfile(for userId: UUID, pingTime: String? = nil) async throws -> SenderProfile {
         let time = pingTime ?? Self.defaultPingTime
 
-        // Generate a unique 6-digit invitation code
+        // Generate a unique 5-digit invitation code
         let invitationCode = try await generateUniqueInvitationCode()
 
         let request = NewSenderProfileRequest(
@@ -155,7 +152,7 @@ final class RoleSelectionService: ObservableObject {
         }
     }
 
-    /// Generate a unique 6-digit invitation code
+    /// Generate a unique 5-digit invitation code
     /// Checks database to ensure code is not already in use
     private func generateUniqueInvitationCode() async throws -> String {
         let maxAttempts = 10
@@ -187,10 +184,10 @@ final class RoleSelectionService: ObservableObject {
         return generateRandomCode()
     }
 
-    /// Generate a random 6-digit code
+    /// Generate a random 5-digit code
     private func generateRandomCode() -> String {
         let digits = "0123456789"
-        return String((0..<6).map { _ in digits.randomElement()! })
+        return String((0..<5).map { _ in digits.randomElement()! })
     }
 
     /// Create a receiver profile for the user with trial subscription
@@ -298,11 +295,16 @@ final class RoleSelectionService: ObservableObject {
             return try await fetchSenderProfile(for: userId) != nil
         case .receiver:
             return try await fetchReceiverProfile(for: userId) != nil
-        case .both:
-            let hasSender = try await fetchSenderProfile(for: userId) != nil
-            let hasReceiver = try await fetchReceiverProfile(for: userId) != nil
-            return hasSender && hasReceiver
         }
+    }
+
+    /// Check if user has both sender and receiver profiles
+    /// - Parameter userId: The user's UUID
+    /// - Returns: True if the user has both profiles
+    func hasBothProfiles(userId: UUID) async throws -> Bool {
+        let hasSender = try await fetchSenderProfile(for: userId) != nil
+        let hasReceiver = try await fetchReceiverProfile(for: userId) != nil
+        return hasSender && hasReceiver
     }
 
     // MARK: - User Update

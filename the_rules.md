@@ -17,7 +17,7 @@ THE RULES THAT YOU MUST ABIDE BY:
 13. You will never tell me a falsehoods, and you will never recommend a path or option just because you think kit will take a long time.
 14. It doesn’t matter if things will take a long time, you will never include timing requirements or project complexity into account when generating options and/or making your recommendations
 15. You will always be brutally honest in all of your responses. 
-16. You will always break up phases into subsections. And you will ask me if you can proceed after you complete and fully test and resolve any failures/error.  You are extremely thorough and must proof to me that you are doing everything that I asked by creating a root/tests markdown file for each effort that you are working on
+16. You will always break up phases into subsections. And you will ask me if you can proceed after you complete and fully test and resolve any failures/error in each phase.  You are extremely thorough and must proof to me that you are doing everything that I asked by creating a root/tests markdown file for each effort that you are working on
 17. You will run tasks in parallel where it makes sense, you will do things sequentially otherwise
 18. You will never skip and requirements or activity and come back to it later.  You will resolve ALL issues rather than skipping them to come back to them later
 19. If you modify a feature or function that has already been tested, you will evaluate creating new test to confirm that you’re changes didn’t cause other issues.  If you identify new tests, you will work to resolve them. You will resolve issues/failures before moving on to the next test
@@ -26,7 +26,7 @@ THE RULES THAT YOU MUST ABIDE BY:
 22. You are exceptionally well at what you do.  If you ever run into something that is outside of your described speciality, you will adopt a new role and teach yourself whatever is needed to have mastery of that skill/competency/etc. so that you are always providing expert opinion based not on guessing, but by continually evolving your expertise to meet all needs that require your attention. 
 23. If you find that I have provided conflicting guidance, you will notify me of the competing guidance and provide your recommendation that I will review when making my final judgmenet.  To be clear, I am exclusively able to resolve conflicts and/or discrepancies.
 24. you must always do build verifications to confirm completeness after each section is done, before you ask me if you can move on.  if everything is not correct, resolve all issues and keep running it until all items a verified complete.
-25. Remember you must always Review the-progress.md,  plan.md , and the_rules.md file before moving on to the next section, if you are working on each [aricular section.  if you are working on a session, disregard this message. 
+25. Remember you must always Review the-progress.md,  plan.md that you create, and the_rules.md file before moving on to the next section, if you are working on each [aricular section.  if you are working on a session, disregard this message. 
 26. You must update the-progress.md after completing each section and after completing each phase.
 
 after completeing all sub section tasks for all subsections, you will run a complete build run to make sure everythig in the phase works.  if it does not work, fix it.  you can not move on to the next phase-section untul all issues are resolved. 

@@ -70,12 +70,12 @@ struct NotificationSettingsView: View {
 
     private var userIsSender: Bool {
         guard let role = userRole else { return true } // Show all if role unknown
-        return role == .sender || role == .both
+        return role == .sender
     }
 
     private var userIsReceiver: Bool {
         guard let role = userRole else { return true } // Show all if role unknown
-        return role == .receiver || role == .both
+        return role == .receiver
     }
 
     // MARK: - Master Toggle Section
@@ -186,7 +186,7 @@ struct NotificationSettingsView: View {
             )) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Deadline Passed")
-                    Text("Alert after 60-minute grace period ends")
+                    Text("Alert when Pruuf time passes without check-in")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -877,7 +877,7 @@ struct QuietHoursSettingsView: View {
 struct NotificationSettingsView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            NotificationSettingsView(userRole: .both, userId: UUID())
+            NotificationSettingsView(userRole: .sender, userId: UUID())
         }
     }
 }

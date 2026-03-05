@@ -291,7 +291,7 @@ struct AdminUserManagementSection: View {
                             if let metrics = adminService.userMetrics {
                                 UserBreakdownRow(label: "Senders", count: metrics.senderCount, icon: "arrow.up.circle.fill", color: .blue)
                                 UserBreakdownRow(label: "Receivers", count: metrics.receiverCount, icon: "arrow.down.circle.fill", color: .green)
-                                UserBreakdownRow(label: "Both Roles", count: metrics.bothRoleCount, icon: "arrow.up.arrow.down.circle.fill", color: .purple)
+                                UserBreakdownRow(label: "Dual Profiles", count: metrics.bothRoleCount, icon: "arrow.up.arrow.down.circle.fill", color: .purple)
                             }
                         }
                     }

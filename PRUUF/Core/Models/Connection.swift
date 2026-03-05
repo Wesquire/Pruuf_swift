@@ -147,17 +147,21 @@ struct ConnectionUpdateRequest: Codable {
 
 // MARK: - Unique Code
 
-/// Represents a receiver's unique 6-digit code for connection establishment
+/// Represents a user's unique 5-digit code for connection establishment
 /// Maps to the `unique_codes` table in Supabase
+/// Both senders and receivers can generate codes for linking
 struct UniqueCode: Codable, Identifiable, Equatable {
     /// Unique identifier
     let id: UUID
 
-    /// 6-digit numeric code
+    /// 5-digit numeric code
     let code: String
 
-    /// Receiver who owns this code
-    let receiverId: UUID
+    /// User who owns this code (sender or receiver)
+    let ownerId: UUID
+
+    /// Role of the code owner (sender or receiver)
+    var ownerRole: String?
 
     /// When the code was created
     let createdAt: Date
@@ -171,7 +175,8 @@ struct UniqueCode: Codable, Identifiable, Equatable {
     enum CodingKeys: String, CodingKey {
         case id
         case code
-        case receiverId = "receiver_id"
+        case ownerId = "owner_id"
+        case ownerRole = "owner_role"
         case createdAt = "created_at"
         case expiresAt = "expires_at"
         case isActive = "is_active"

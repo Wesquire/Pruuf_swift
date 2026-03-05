@@ -25,7 +25,8 @@ enum SupabaseConfig {
                 auth: .init(
                     storage: KeychainLocalStorage(),
                     redirectToURL: URL(string: "pruuf://auth/callback"),
-                    flowType: .pkce
+                    flowType: .pkce,
+                    emitLocalSessionAsInitialSession: true
                 ),
                 global: .init(
                     headers: ["x-app-name": "PRUUF-iOS"]

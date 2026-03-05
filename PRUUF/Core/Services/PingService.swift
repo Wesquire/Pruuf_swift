@@ -642,7 +642,7 @@ struct TodaysPingStatus {
         } else if isLate {
             return "Send Pruuf Now"
         } else if hasPendingPings {
-            return "I'm Okay"
+            return "Send Pruuf"
         } else {
             return "No Action Needed"
         }

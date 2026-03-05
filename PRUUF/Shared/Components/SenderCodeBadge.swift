@@ -6,7 +6,7 @@ import SwiftUI
 /// Per Plan 4 Requirement 2: Sender's unique code should be visible on all screens
 /// where sender selects receivers
 struct SenderCodeBadge: View {
-    /// The sender's 6-digit invitation code
+    /// The sender's 5-digit invitation code
     let code: String?
 
     /// Whether the badge is expanded to show the full code

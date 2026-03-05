@@ -1,5 +1,5 @@
 // PRUUF Edge Function: validate-connection-code
-// Purpose: Validate and create connections using 6-digit codes
+// Purpose: Validate and create connections using 5-digit codes
 //
 // This function handles:
 // - Code validation (must be active and valid)
@@ -57,12 +57,12 @@ serve(async (req) => {
       )
     }
 
-    // Validate code format (6-digit numeric)
-    if (!/^\d{6}$/.test(code)) {
+    // Validate code format (5-digit numeric)
+    if (!/^\d{5}$/.test(code)) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Invalid code format. Must be 6 digits.',
+          error: 'Invalid code format. Must be 5 digits.',
           errorCode: 'INVALID_CODE_FORMAT',
         } as ValidateConnectionResponse),
         {

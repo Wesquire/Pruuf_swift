@@ -17,9 +17,9 @@ enum OnboardingFeature {
 /// Current state of the onboarding flow
 enum OnboardingState: Equatable {
     case roleSelection
+    case deviceTransferCode(selectedRole: UserRole)
     case senderOnboarding(step: OnboardingStep)
     case receiverOnboarding(step: OnboardingStep)
-    case addSecondRole(currentRole: UserRole)
     case complete
 }
 
@@ -152,7 +152,9 @@ struct RoleSelectionView: View {
 
         do {
             // Get the phone number from auth service for user creation if needed
-            let phoneNumber = authService.currentPruufUser?.phoneNumber ?? authService.pendingVerificationPhone
+            let phoneNumber = authService.currentPruufUser?.phoneNumber
+                ?? authService.pendingVerificationPhone
+                ?? UserDefaults.standard.string(forKey: "com.pruuf.authenticatedPhone")
 
             // Save the role selection to database
             _ = try await roleService.selectRole(role, for: userId, phoneNumber: phoneNumber)
@@ -165,6 +167,7 @@ struct RoleSelectionView: View {
             finalizeSelection()
         } catch {
             isProcessing = false
+            print("Role selection error: \(error.localizedDescription)")
             errorMessage = "Failed to save selection. Please try again."
         }
     }
@@ -261,6 +264,18 @@ struct OnboardingCoordinatorView: View {
                     case .roleSelection:
                         RoleSelectionView(onRoleSelected: handleRoleSelected)
 
+                    case .deviceTransferCode(let selectedRole):
+                        // Device Transfer PIN setup (Phase 3)
+                        DeviceTransferCodeView {
+                            withAnimation {
+                                if selectedRole == .sender {
+                                    currentState = .senderOnboarding(step: .senderTutorial)
+                                } else {
+                                    currentState = .receiverOnboarding(step: .receiverTutorial)
+                                }
+                            }
+                        }
+
                     case .senderOnboarding(let step):
                         // Sender Onboarding Flow (Section 3.3)
                         SenderOnboardingCoordinatorView(
@@ -274,10 +289,6 @@ struct OnboardingCoordinatorView: View {
                             startingStep: step,
                             onComplete: handleOnboardingComplete
                         )
-
-                    case .addSecondRole:
-                        // Handled via alert in RoleSelectionView
-                        EmptyView()
 
                     case .complete:
                         OnboardingCompleteView()
@@ -311,8 +322,12 @@ struct OnboardingCoordinatorView: View {
             let resumeStep = try await roleService.getResumeStep(for: userId)
 
             // Determine the state based on the resume step
-            if resumeStep == .roleSelection {
+            if resumeStep == .roleSelection || resumeStep == .nameEntry {
                 currentState = .roleSelection
+            } else if resumeStep == .deviceTransferCode {
+                // Need to know their role to route after PIN setup
+                let role = authService.currentPruufUser?.primaryRole ?? .sender
+                currentState = .deviceTransferCode(selectedRole: role)
             } else if resumeStep.isSenderStep {
                 currentState = .senderOnboarding(step: resumeStep)
             } else if resumeStep.isReceiverStep {
@@ -329,14 +344,10 @@ struct OnboardingCoordinatorView: View {
         isLoadingResume = false
     }
 
-    /// Handle when user selects a role
+    /// Handle when user selects a role - routes to device transfer PIN first
     private func handleRoleSelected(_ role: UserRole) {
         withAnimation {
-            if role == .sender || authService.currentPruufUser?.primaryRole == .both {
-                currentState = .senderOnboarding(step: .senderTutorial)
-            } else {
-                currentState = .receiverOnboarding(step: .receiverTutorial)
-            }
+            currentState = .deviceTransferCode(selectedRole: role)
         }
     }
 
@@ -382,9 +393,9 @@ struct OnboardingLoadingView: View {
 // MARK: - Receiver Onboarding (Section 3.4 / US-1.4)
 // Full implementation available in ReceiverOnboardingViews.swift
 // - ReceiverTutorialView: Tutorial slides explaining how PRUUF works for receivers
-// - UniqueCodeView: 6-digit unique code display with copy/share functionality
+// - UniqueCodeView: 5-digit unique code display with copy/share functionality
 // - SenderCodeEntryView: Optional entry of sender's code to connect
-// - SubscriptionInfoView: Explains 15-day free trial and $2.99/month pricing
+// - SubscriptionInfoView: Explains 15-day free trial and $4.99/month pricing
 // - ReceiverNotificationPermissionView: Push notification permission request
 // - ReceiverOnboardingCompleteView: Setup summary and completion
 // - ReceiverOnboardingCoordinatorView: Coordinates the entire flow

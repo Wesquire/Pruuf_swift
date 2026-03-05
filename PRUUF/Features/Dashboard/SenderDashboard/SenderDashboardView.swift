@@ -197,7 +197,7 @@ struct SenderDashboardView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 32))
-                    Text("I'm Okay")
+                    Text("Send Pruuf")
                         .font(.system(size: 28, weight: .bold))
                 }
                 .foregroundColor(.white)
@@ -213,7 +213,7 @@ struct SenderDashboardView: View {
                 isPresented: $showOkConfirmation,
                 titleVisibility: .visible
             ) {
-                Button("Yes, I'm Okay") {
+                Button("Yes, Send Pruuf") {
                     Task {
                         await viewModel.completePing()
                     }

@@ -6,7 +6,6 @@ import Foundation
 enum UserRole: String, Codable, CaseIterable, Equatable {
     case sender = "sender"
     case receiver = "receiver"
-    case both = "both"
 
     /// Display title for the role
     var displayTitle: String {
@@ -15,8 +14,6 @@ enum UserRole: String, Codable, CaseIterable, Equatable {
             return "I want to check in daily"
         case .receiver:
             return "I want peace of mind"
-        case .both:
-            return "Both sender and receiver"
         }
     }
 
@@ -27,8 +24,6 @@ enum UserRole: String, Codable, CaseIterable, Equatable {
             return "Let people know you're okay with a simple daily Pruuf"
         case .receiver:
             return "Get daily confirmation that your loved ones are safe"
-        case .both:
-            return "Check in daily and monitor loved ones"
         }
     }
 
@@ -38,9 +33,7 @@ enum UserRole: String, Codable, CaseIterable, Equatable {
         case .sender:
             return "Always Free"
         case .receiver:
-            return "$2.99/month after 15-day trial"
-        case .both:
-            return "$2.99/month for receiver features"
+            return "$4.99/month after 15-day trial"
         }
     }
 
@@ -51,8 +44,6 @@ enum UserRole: String, Codable, CaseIterable, Equatable {
             return "checkmark.circle.fill"
         case .receiver:
             return "heart.fill"
-        case .both:
-            return "person.2.fill"
         }
     }
 }
@@ -90,7 +81,7 @@ struct PruufUser: Codable, Identifiable, Equatable {
     /// Whether the user has completed onboarding
     var hasCompletedOnboarding: Bool
 
-    /// User's primary role (sender, receiver, or both)
+    /// User's primary role (sender or receiver)
     var primaryRole: UserRole?
 
     /// User's timezone identifier (e.g., "America/New_York")
@@ -110,6 +101,9 @@ struct PruufUser: Codable, Identifiable, Equatable {
 
     /// URL to user's avatar image (from storage bucket)
     var avatarURL: String?
+
+    /// 4-digit device transfer PIN for account recovery on new devices
+    var deviceTransferCode: String?
 
     // MARK: - Coding Keys
 
@@ -131,6 +125,7 @@ struct PruufUser: Codable, Identifiable, Equatable {
         case onboardingStep = "onboarding_step"
         case displayName = "display_name"
         case avatarURL = "avatar_url"
+        case deviceTransferCode = "device_transfer_code"
     }
 
     // MARK: - Computed Properties
@@ -432,6 +427,8 @@ struct UserUpdateRequest: Codable {
 
 /// Tracks user's progress through onboarding flow (for resuming mid-onboarding - EC-2.1)
 enum OnboardingStep: String, Codable, CaseIterable, Equatable {
+    case nameEntry = "name_entry"
+    case deviceTransferCode = "device_transfer_code"
     case roleSelection = "role_selection"
     case senderTutorial = "sender_tutorial"
     case senderPingTime = "sender_ping_time"
@@ -447,6 +444,10 @@ enum OnboardingStep: String, Codable, CaseIterable, Equatable {
     /// Display name for the step
     var displayName: String {
         switch self {
+        case .nameEntry:
+            return "Enter your name"
+        case .deviceTransferCode:
+            return "Set transfer PIN"
         case .roleSelection:
             return "Choose your role"
         case .senderTutorial:
@@ -510,7 +511,7 @@ struct SenderProfile: Codable, Identifiable, Equatable {
     /// Whether pings are currently enabled
     var pingEnabled: Bool
 
-    /// Unique 6-digit invitation code for receivers to connect
+    /// Unique 5-digit invitation code for receivers to connect
     var invitationCode: String?
 
     /// Whether the sender profile is active

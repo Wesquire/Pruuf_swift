@@ -5,9 +5,9 @@ import StoreKit
 /// Service for managing receiver subscriptions
 /// Handles subscription status checks, trial management, and App Store integration
 /// Pricing per plan.md Section 9.1:
-/// - Receiver-only users: $2.99/month
+/// - Receiver-only users: $4.99/month
 /// - Senders: Always free
-/// - Dual role users (Both): $2.99/month (only if they have receiver connections)
+/// - Users with receiver profiles: $4.99/month (only if they have receiver connections)
 /// - 15-day free trial for all receivers
 /// - No credit card required to start trial
 @MainActor
@@ -192,7 +192,7 @@ final class SubscriptionService: ObservableObject {
     /// Create or retrieve a unique code for the receiver
     /// Uses the database function to handle code generation and storage
     /// - Parameter userId: The user's UUID
-    /// - Returns: The 6-digit unique code
+    /// - Returns: The 5-digit unique code
     func createReceiverCode(userId: UUID) async throws -> String {
         isLoading = true
         defer { isLoading = false }
@@ -206,7 +206,7 @@ final class SubscriptionService: ObservableObject {
 
     /// Refresh the receiver's unique code (generate a new one)
     /// - Parameter userId: The user's UUID
-    /// - Returns: The new 6-digit unique code
+    /// - Returns: The new 5-digit unique code
     func refreshReceiverCode(userId: UUID) async throws -> String {
         isLoading = true
         defer { isLoading = false }
@@ -409,7 +409,7 @@ final class SubscriptionService: ObservableObject {
     // MARK: - Subscription Pricing Info
 
     /// Subscription price per plan.md Section 9.1
-    static let monthlyPrice: Decimal = 2.99
+    static let monthlyPrice: Decimal = 4.99
 
     /// Trial duration in days per plan.md Section 9.1
     static let trialDays: Int = 15
@@ -417,12 +417,12 @@ final class SubscriptionService: ObservableObject {
     /// Product ID per plan.md Section 9.1
     static let productId = "com.pruuf.receiver.monthly"
 
-    /// Check if user needs subscription (is receiver or both role)
+    /// Check if user needs subscription (has receiver profile)
     /// - Parameter userRole: The user's primary role
-    /// - Returns: Whether subscription is required
+    /// - Returns: Whether subscription is required based on role
     static func requiresSubscription(for userRole: UserRole?) -> Bool {
         switch userRole {
-        case .receiver, .both:
+        case .receiver:
             return true
         case .sender, .none:
             return false
@@ -437,9 +437,7 @@ final class SubscriptionService: ObservableObject {
         case .sender:
             return "Always Free"
         case .receiver:
-            return "$2.99/month after 15-day free trial"
-        case .both:
-            return "$2.99/month for receiver features"
+            return "$4.99/month after 15-day free trial"
         case .none:
             return ""
         }

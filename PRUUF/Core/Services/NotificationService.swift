@@ -85,6 +85,26 @@ final class NotificationService: ObservableObject {
             return
         }
 
+        // Verify user record exists in the users table before registering token
+        // (auth session can exist before the users table record is created)
+        let userExists: Bool
+        do {
+            let count: Int = try await database
+                .from("users")
+                .select("id", head: true, count: .exact)
+                .eq("id", value: userId.uuidString)
+                .execute()
+                .count ?? 0
+            userExists = count > 0
+        } catch {
+            userExists = false
+        }
+
+        guard userExists else {
+            Logger.info("Device token registration deferred: user record not yet created")
+            return
+        }
+
         do {
             // Determine platform (sandbox vs production)
             #if DEBUG
@@ -285,7 +305,7 @@ final class NotificationService: ObservableObject {
         // Ping Reminder Actions
         let confirmAction = UNNotificationAction(
             identifier: "CONFIRM_PING",
-            title: "I'm Okay",
+            title: "Send Pruuf",
             options: [.foreground]
         )
 

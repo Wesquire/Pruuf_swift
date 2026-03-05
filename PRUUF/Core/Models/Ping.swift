@@ -18,7 +18,7 @@ struct Ping: Codable, Identifiable, Equatable {
     /// When the ping is scheduled for
     let scheduledTime: Date
 
-    /// Deadline for confirming the ping (scheduled_time + grace period)
+    /// Deadline for confirming the ping (equals scheduled_time, no grace period)
     let deadlineTime: Date
 
     /// When the ping was completed (nil if not yet completed)
@@ -95,10 +95,6 @@ struct Ping: Codable, Identifiable, Equatable {
         }
     }
 
-    /// Grace period duration
-    var gracePeriod: TimeInterval {
-        deadlineTime.timeIntervalSince(scheduledTime)
-    }
 }
 
 // MARK: - Completion Method

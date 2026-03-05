@@ -96,7 +96,7 @@ struct ReceiverCodeEntryView: View {
     private var codeEntrySection: some View {
         VStack(spacing: 8) {
             HStack(spacing: 12) {
-                ForEach(0..<6, id: \.self) { index in
+                ForEach(0..<5, id: \.self) { index in
                     digitBox(at: index)
                 }
             }
@@ -109,9 +109,9 @@ struct ReceiverCodeEntryView: View {
                 .opacity(0.01)
                 .frame(width: 1, height: 1)
                 .onChange(of: viewModel.code) { newValue in
-                    // Limit to 6 digits
-                    if newValue.count > 6 {
-                        viewModel.code = String(newValue.prefix(6))
+                    // Limit to 5 digits
+                    if newValue.count > 5 {
+                        viewModel.code = String(newValue.prefix(5))
                     }
                     // Filter non-numeric characters
                     viewModel.code = newValue.filter { $0.isNumber }

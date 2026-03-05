@@ -30,22 +30,56 @@ final class UserService: ObservableObject {
     /// - Parameters:
     ///   - authId: The user's auth ID from Supabase Auth
     ///   - phoneNumber: The user's phone number
+    ///   - displayName: The user's display name (for new user creation)
     /// - Returns: The fetched or newly created PruufUser
-    func fetchOrCreateUser(authId: UUID, phoneNumber: String) async throws -> PruufUser {
+    func fetchOrCreateUser(authId: UUID, phoneNumber: String, displayName: String? = nil) async throws -> PruufUser {
         isLoading = true
         error = nil
         defer { isLoading = false }
 
-        // First, try to fetch existing user
-        if let existingUser = try await fetchUser(by: authId) {
-            currentPruufUser = existingUser
-            return existingUser
+        // Use server-side RPC that bypasses RLS to handle:
+        // 1. Find by auth ID (exact match)
+        // 2. Find by phone number + reassociate auth ID (re-auth scenario)
+        // 3. Create new user if neither found
+        do {
+            return try await callFindOrCreateUserRPC(authId: authId, phoneNumber: phoneNumber, displayName: displayName)
+        } catch {
+            let msg = error.localizedDescription
+            // Approach 3: If error is about a missing column, retry without display_name
+            if msg.contains("does not exist") || msg.contains("column") {
+                print("[UserService] RPC column error, retrying without display_name: \(msg)")
+                do {
+                    return try await callFindOrCreateUserRPC(authId: authId, phoneNumber: phoneNumber, displayName: nil)
+                } catch {
+                    throw UserServiceError.fetchFailed(error.localizedDescription)
+                }
+            }
+            throw UserServiceError.fetchFailed(msg)
+        }
+    }
+
+    /// Internal helper to call the find_or_create_user RPC
+    private func callFindOrCreateUserRPC(authId: UUID, phoneNumber: String, displayName: String?) async throws -> PruufUser {
+        var params: [String: String] = [
+            "p_auth_id": authId.uuidString,
+            "p_phone": phoneNumber,
+            "p_timezone": TimeZone.current.identifier
+        ]
+        if let name = displayName {
+            params["p_display_name"] = name
         }
 
-        // User doesn't exist, create new one
-        let newUser = try await createUser(authId: authId, phoneNumber: phoneNumber)
-        currentPruufUser = newUser
-        return newUser
+        let users: [PruufUser] = try await database
+            .rpc("find_or_create_user", params: params)
+            .execute()
+            .value
+
+        guard let user = users.first else {
+            throw UserServiceError.fetchFailed("RPC returned no user")
+        }
+
+        currentPruufUser = user
+        return user
     }
 
     /// Fetch a user by their ID
@@ -87,8 +121,9 @@ final class UserService: ObservableObject {
     ///   - authId: The user's auth ID from Supabase Auth
     ///   - phoneNumber: The user's phone number (without country code)
     ///   - phoneCountryCode: The country code (default: "+1")
+    ///   - displayName: The user's display name
     /// - Returns: The newly created PruufUser
-    func createUser(authId: UUID, phoneNumber: String, phoneCountryCode: String = "+1") async throws -> PruufUser {
+    func createUser(authId: UUID, phoneNumber: String, phoneCountryCode: String = "+1", displayName: String? = nil) async throws -> PruufUser {
         isLoading = true
         error = nil
         defer { isLoading = false }
@@ -100,6 +135,7 @@ final class UserService: ObservableObject {
             id: authId,
             phoneNumber: phoneNumber,
             phoneCountryCode: phoneCountryCode,
+            displayName: displayName,
             timezone: timezone,
             isActive: true,
             hasCompletedOnboarding: false,
@@ -207,9 +243,18 @@ final class UserService: ObservableObject {
     func syncTimezoneIfNeeded(userId: UUID) async throws -> PruufUser? {
         let currentTimezone = TimeZone.current.identifier
 
-        // Check if we need to update
+        // Check cached user first
         if let user = currentPruufUser, user.timezone == currentTimezone {
-            // No change needed
+            return nil
+        }
+
+        // Fetch fresh user to check timezone (handles case where currentPruufUser is nil)
+        guard let user = try await fetchUser(by: userId) else {
+            // User record doesn't exist yet — skip timezone sync
+            return nil
+        }
+
+        if user.timezone == currentTimezone {
             return nil
         }
 
@@ -236,6 +281,7 @@ private struct NewUserRequest: Codable {
     let id: UUID
     let phoneNumber: String
     let phoneCountryCode: String
+    let displayName: String?
     let timezone: String
     let isActive: Bool
     let hasCompletedOnboarding: Bool
@@ -247,6 +293,7 @@ private struct NewUserRequest: Codable {
         case id
         case phoneNumber = "phone_number"
         case phoneCountryCode = "phone_country_code"
+        case displayName = "display_name"
         case timezone
         case isActive = "is_active"
         case hasCompletedOnboarding = "has_completed_onboarding"

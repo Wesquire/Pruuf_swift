@@ -88,27 +88,70 @@ final class ConnectionService: ObservableObject {
 
     // MARK: - Create Connection via Code
 
-    /// Create a connection using a receiver's unique code
+    /// Create a connection using a 5-digit code (bidirectional)
+    /// Looks up code in both unique_codes (receiver codes) and sender_profiles (sender codes)
     /// - Parameters:
-    ///   - senderId: The sender's user ID
-    ///   - code: The receiver's unique 6-digit code
+    ///   - connectingUserId: The user creating the connection
+    ///   - code: The 5-digit code
+    ///   - connectingRole: The role of the connecting user (sender or receiver)
     /// - Returns: The created connection
     @discardableResult
-    func createConnection(senderId: UUID, withCode code: String) async throws -> Connection {
+    func createConnection(connectingUserId: UUID, withCode code: String, connectingRole: UserRole = .sender) async throws -> Connection {
         isLoading = true
         defer { isLoading = false }
 
-        // Look up the unique code to find the receiver
+        var senderId: UUID
+        var receiverId: UUID
+
+        // Try looking up as a receiver's unique code first
         let codes: [UniqueCode] = try await database
             .from("unique_codes")
-            .select("*, receiver:receiver_id(id, phone_number, phone_country_code, timezone)")
+            .select()
             .eq("code", value: code)
             .eq("is_active", value: true)
             .execute()
             .value
 
-        guard let uniqueCode = codes.first else {
-            throw ConnectionServiceError.invalidCode
+        if let uniqueCode = codes.first {
+            // Code belongs to someone - determine roles based on owner_role
+            if uniqueCode.ownerRole == "receiver" {
+                // Receiver's code: connecting user is the sender
+                senderId = connectingUserId
+                receiverId = uniqueCode.ownerId
+            } else {
+                // Sender's code: connecting user is the receiver
+                senderId = uniqueCode.ownerId
+                receiverId = connectingUserId
+            }
+        } else {
+            // Try looking up as a sender's invitation code
+            struct SenderProfileLookup: Codable {
+                let userId: UUID
+                enum CodingKeys: String, CodingKey {
+                    case userId = "user_id"
+                }
+            }
+
+            let senderProfiles: [SenderProfileLookup] = try await database
+                .from("sender_profiles")
+                .select("user_id")
+                .eq("invitation_code", value: code)
+                .eq("is_active", value: true)
+                .execute()
+                .value
+
+            guard let senderProfile = senderProfiles.first else {
+                throw ConnectionServiceError.invalidCode
+            }
+
+            // Sender's invitation code: connecting user is the receiver
+            senderId = senderProfile.userId
+            receiverId = connectingUserId
+        }
+
+        // Prevent self-connection
+        if senderId == receiverId {
+            throw ConnectionServiceError.cannotConnectToSelf
         }
 
         // Check if connection already exists
@@ -116,30 +159,27 @@ final class ConnectionService: ObservableObject {
             .from("connections")
             .select()
             .eq("sender_id", value: senderId.uuidString)
-            .eq("receiver_id", value: uniqueCode.receiverId.uuidString)
+            .eq("receiver_id", value: receiverId.uuidString)
             .execute()
             .value
 
         if let existing = existingConnections.first {
             if existing.status == .deleted {
-                // Reactivate the connection
+                return try await updateConnectionStatus(connectionId: existing.id, status: .active)
+            } else if existing.status == .pending {
+                // Activate a pending connection
                 return try await updateConnectionStatus(connectionId: existing.id, status: .active)
             } else {
                 throw ConnectionServiceError.connectionAlreadyExists
             }
         }
 
-        // Prevent self-connection
-        if senderId == uniqueCode.receiverId {
-            throw ConnectionServiceError.cannotConnectToSelf
-        }
-
-        // Create new connection
+        // Create new active connection
         let newConnection: Connection = try await database
             .from("connections")
             .insert([
                 "sender_id": senderId.uuidString,
-                "receiver_id": uniqueCode.receiverId.uuidString,
+                "receiver_id": receiverId.uuidString,
                 "status": ConnectionStatus.active.rawValue,
                 "connection_code": code
             ])
@@ -148,10 +188,61 @@ final class ConnectionService: ObservableObject {
             .execute()
             .value
 
-        // Add to local state
         connections.insert(newConnection, at: 0)
-
         return newConnection
+    }
+
+    // MARK: - Create Pending Connection
+
+    /// Create a pending connection (when one party invites via contacts/iMessage)
+    /// The connection becomes active when the other party enters the code
+    @discardableResult
+    func createPendingConnection(senderId: UUID, receiverId: UUID, connectionCode: String) async throws -> Connection {
+        isLoading = true
+        defer { isLoading = false }
+
+        // Check if connection already exists
+        let existing: [Connection] = try await database
+            .from("connections")
+            .select()
+            .eq("sender_id", value: senderId.uuidString)
+            .eq("receiver_id", value: receiverId.uuidString)
+            .neq("status", value: ConnectionStatus.deleted.rawValue)
+            .execute()
+            .value
+
+        if let existingConnection = existing.first {
+            return existingConnection
+        }
+
+        let newConnection: Connection = try await database
+            .from("connections")
+            .insert([
+                "sender_id": senderId.uuidString,
+                "receiver_id": receiverId.uuidString,
+                "status": ConnectionStatus.pending.rawValue,
+                "connection_code": connectionCode
+            ])
+            .select("*, receiver:receiver_id(id, phone_number, phone_country_code, timezone)")
+            .single()
+            .execute()
+            .value
+
+        pendingConnections.insert(newConnection, at: 0)
+        return newConnection
+    }
+
+    // MARK: - Activate Pending Connection
+
+    /// Activate a pending connection when the second party enters the code
+    @discardableResult
+    func activatePendingConnection(connectionId: UUID) async throws -> Connection {
+        let connection = try await updateConnectionStatus(connectionId: connectionId, status: .active)
+        pendingConnections.removeAll { $0.id == connectionId }
+        if !connections.contains(where: { $0.id == connectionId }) {
+            connections.insert(connection, at: 0)
+        }
+        return connection
     }
 
     // MARK: - Create Connection via Edge Function
@@ -161,7 +252,7 @@ final class ConnectionService: ObservableObject {
     /// handles all edge cases (EC-5.1 through EC-5.4) atomically on the server
     /// - Parameters:
     ///   - senderId: The sender's user ID
-    ///   - code: The receiver's unique 6-digit code
+    ///   - code: The receiver's unique 5-digit code
     /// - Returns: The created connection
     @discardableResult
     func createConnectionViaEdgeFunction(senderId: UUID, withCode code: String) async throws -> Connection {
@@ -309,12 +400,17 @@ final class ConnectionService: ObservableObject {
     // MARK: - Refresh Connections
 
     /// Refresh all connection data for a user
-    func refreshConnections(userId: UUID, role: UserRole?) async {
+    /// - Parameters:
+    ///   - userId: The user's UUID
+    ///   - role: The user's primary role
+    ///   - hasSenderProfile: Whether the user has a sender profile
+    ///   - hasReceiverProfile: Whether the user has a receiver profile
+    func refreshConnections(userId: UUID, role: UserRole?, hasSenderProfile: Bool = false, hasReceiverProfile: Bool = false) async {
         do {
-            if role == .sender || role == .both {
+            if role == .sender || hasSenderProfile {
                 try await fetchConnectionsAsSender(userId: userId)
             }
-            if role == .receiver || role == .both {
+            if role == .receiver || hasReceiverProfile {
                 try await fetchConnectionsAsReceiver(userId: userId)
                 try await fetchPendingConnections(userId: userId)
             }

@@ -24,18 +24,17 @@ final class PingNotificationScheduler: ObservableObject {
     /// Prefix identifiers for different notification types
     private enum NotificationPrefix {
         static let scheduledTime = "ping_scheduled_"
-        static let deadlineWarning = "ping_warning_"
-        static let deadlineFinal = "ping_final_"
         static let missedPing = "ping_missed_"
+        static let receiverMissed = "receiver_missed_"
+        static let receiverMissedFollowup = "receiver_missed_followup_"
     }
 
     // MARK: - Notification Categories
 
     private enum NotificationCategory {
         static let pingReminder = "PING_REMINDER"
-        static let deadlineWarning = "PING_DEADLINE_WARNING"
-        static let deadlineFinal = "PING_DEADLINE_FINAL"
         static let missedPingAlert = "MISSED_PING_ALERT"
+        static let receiverMissedAlert = "RECEIVER_MISSED_ALERT"
         static let pingCompleted = "PING_COMPLETED"
         static let breakStarted = "BREAK_STARTED"
     }
@@ -55,7 +54,7 @@ final class PingNotificationScheduler: ObservableObject {
         // Ping Reminder (at scheduled time) Actions
         let confirmAction = UNNotificationAction(
             identifier: "CONFIRM_PING",
-            title: "I'm Okay",
+            title: "Send Pruuf",
             options: [.foreground]
         )
 
@@ -72,35 +71,7 @@ final class PingNotificationScheduler: ObservableObject {
             options: [.customDismissAction]
         )
 
-        // Deadline Warning (15 min before) Actions
-        let urgentConfirmAction = UNNotificationAction(
-            identifier: "URGENT_CONFIRM_PING",
-            title: "I'm Okay",
-            options: [.foreground]
-        )
-
-        let deadlineWarningCategory = UNNotificationCategory(
-            identifier: NotificationCategory.deadlineWarning,
-            actions: [urgentConfirmAction],
-            intentIdentifiers: [],
-            options: [.customDismissAction]
-        )
-
-        // Final Deadline Actions
-        let finalConfirmAction = UNNotificationAction(
-            identifier: "FINAL_CONFIRM_PING",
-            title: "I'm Okay Now!",
-            options: [.foreground]
-        )
-
-        let deadlineFinalCategory = UNNotificationCategory(
-            identifier: NotificationCategory.deadlineFinal,
-            actions: [finalConfirmAction],
-            intentIdentifiers: [],
-            options: [.customDismissAction]
-        )
-
-        // Missed Ping Alert (for receivers) - No actions needed
+        // Missed Ping Alert (for sender) - No actions needed
         let missedPingCategory = UNNotificationCategory(
             identifier: NotificationCategory.missedPingAlert,
             actions: [],
@@ -122,6 +93,14 @@ final class PingNotificationScheduler: ObservableObject {
             options: []
         )
 
+        // Receiver Missed Alert (for receivers when sender hasn't checked in)
+        let receiverMissedCategory = UNNotificationCategory(
+            identifier: NotificationCategory.receiverMissedAlert,
+            actions: [viewDetailsAction],
+            intentIdentifiers: [],
+            options: []
+        )
+
         // Break Started (for receivers)
         let breakStartedCategory = UNNotificationCategory(
             identifier: NotificationCategory.breakStarted,
@@ -133,9 +112,8 @@ final class PingNotificationScheduler: ObservableObject {
         // Register all categories
         notificationCenter.setNotificationCategories([
             pingReminderCategory,
-            deadlineWarningCategory,
-            deadlineFinalCategory,
             missedPingCategory,
+            receiverMissedCategory,
             pingCompletedCategory,
             breakStartedCategory
         ])
@@ -165,20 +143,11 @@ final class PingNotificationScheduler: ObservableObject {
             await scheduleScheduledTimeReminder(for: ping, sound: standardSound)
         }
 
-        // 2. Schedule 15 minutes before deadline warning (if enabled)
-        if preferences.fifteenMinuteWarning {
-            await scheduleDeadlineWarning(for: ping, sound: standardSound)
-        }
-
-        // 3. Schedule at-deadline final reminder (if deadline warning enabled)
-        if preferences.deadlineWarning {
-            await scheduleDeadlineFinalReminder(for: ping, sound: criticalSound)
-        }
-
-        // 4. Schedule missed ping notification (5 min after deadline) - always schedule for sender
+        // 2. Schedule missed ping notification at scheduled time - always schedule for sender
+        // No grace period: deadline = scheduled time, so missed notification triggers at scheduled time
         await scheduleMissedPingNotification(for: ping, sound: criticalSound)
 
-        Logger.info("Scheduled sender notifications for ping: \(ping.id) (ping_reminders: \(preferences.pingReminders), fifteen_min_warning: \(preferences.fifteenMinuteWarning), deadline_warning: \(preferences.deadlineWarning))")
+        Logger.info("Scheduled sender notifications for ping: \(ping.id) (ping_reminders: \(preferences.pingReminders))")
     }
 
     /// Fetch notification preferences for a user
@@ -248,93 +217,12 @@ final class PingNotificationScheduler: ObservableObject {
         }
     }
 
-    /// Schedule warning notification 15 minutes before deadline
-    /// "Reminder: 15 minutes until your ping deadline"
-    private func scheduleDeadlineWarning(for ping: Ping, sound: UNNotificationSound?) async {
-        let content = UNMutableNotificationContent()
-        content.title = "Pruuf Deadline Approaching"
-        content.body = "Reminder: 15 minutes until your Pruuf deadline"
-        content.sound = sound
-        content.categoryIdentifier = NotificationCategory.deadlineWarning
-        content.userInfo = [
-            "type": NotificationType.deadlineWarning.rawValue,
-            "ping_id": ping.id.uuidString,
-            "connection_id": ping.connectionId.uuidString
-        ]
-
-        // Schedule for 15 minutes before deadline
-        let warningTime = ping.deadlineTime.addingTimeInterval(-15 * 60)
-        guard warningTime > Date() else {
-            Logger.info("Skipping deadline warning - time has passed")
-            return
-        }
-
-        let dateComponents = Calendar.current.dateComponents(
-            [.year, .month, .day, .hour, .minute],
-            from: warningTime
-        )
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
-
-        let request = UNNotificationRequest(
-            identifier: "\(NotificationPrefix.deadlineWarning)\(ping.id.uuidString)",
-            content: content,
-            trigger: trigger
-        )
-
-        do {
-            try await notificationCenter.add(request)
-            Logger.info("Scheduled deadline warning for \(warningTime)")
-        } catch {
-            Logger.error("Failed to schedule deadline warning: \(error.localizedDescription)")
-        }
-    }
-
-    /// Schedule final reminder at the deadline
-    /// "Final reminder: Your ping deadline is now"
-    private func scheduleDeadlineFinalReminder(for ping: Ping, sound: UNNotificationSound?) async {
-        let content = UNMutableNotificationContent()
-        content.title = "Pruuf Deadline Now!"
-        content.body = "Final reminder: Your Pruuf deadline is now"
-        content.sound = sound
-        content.categoryIdentifier = NotificationCategory.deadlineFinal
-        content.userInfo = [
-            "type": NotificationType.deadlineFinal.rawValue,
-            "ping_id": ping.id.uuidString,
-            "connection_id": ping.connectionId.uuidString
-        ]
-
-        // Schedule for the deadline time
-        guard ping.deadlineTime > Date() else {
-            Logger.info("Skipping deadline final reminder - time has passed")
-            return
-        }
-
-        let dateComponents = Calendar.current.dateComponents(
-            [.year, .month, .day, .hour, .minute],
-            from: ping.deadlineTime
-        )
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
-
-        let request = UNNotificationRequest(
-            identifier: "\(NotificationPrefix.deadlineFinal)\(ping.id.uuidString)",
-            content: content,
-            trigger: trigger
-        )
-
-        do {
-            try await notificationCenter.add(request)
-            Logger.info("Scheduled deadline final reminder for \(ping.deadlineTime)")
-        } catch {
-            Logger.error("Failed to schedule deadline final reminder: \(error.localizedDescription)")
-        }
-    }
-
-    /// Schedule missed ping notification 5 minutes after deadline
+    /// Schedule missed ping notification at scheduled time (deadline = scheduled time, no grace period)
     /// This is for the sender to see they missed it (receiver notifications are sent via backend)
     private func scheduleMissedPingNotification(for ping: Ping, sound: UNNotificationSound?) async {
         let content = UNMutableNotificationContent()
         content.title = "Pruuf Missed"
-        content.body = "You missed your Pruuf deadline. You can still submit a late Pruuf."
+        content.body = "You missed your Pruuf time. You can still submit a late Pruuf."
         content.sound = sound
         content.categoryIdentifier = NotificationCategory.missedPingAlert
         content.userInfo = [
@@ -343,16 +231,15 @@ final class PingNotificationScheduler: ObservableObject {
             "connection_id": ping.connectionId.uuidString
         ]
 
-        // Schedule for 5 minutes after deadline
-        let missedTime = ping.deadlineTime.addingTimeInterval(5 * 60)
-        guard missedTime > Date() else {
+        // Schedule at the scheduled time (deadline = scheduled time, no grace period)
+        guard ping.scheduledTime > Date() else {
             Logger.info("Skipping missed ping notification - time has passed")
             return
         }
 
         let dateComponents = Calendar.current.dateComponents(
             [.year, .month, .day, .hour, .minute],
-            from: missedTime
+            from: ping.scheduledTime
         )
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
 
@@ -364,7 +251,7 @@ final class PingNotificationScheduler: ObservableObject {
 
         do {
             try await notificationCenter.add(request)
-            Logger.info("Scheduled missed ping notification for \(missedTime)")
+            Logger.info("Scheduled missed ping notification for \(ping.scheduledTime)")
         } catch {
             Logger.error("Failed to schedule missed ping notification: \(error.localizedDescription)")
         }
@@ -377,9 +264,9 @@ final class PingNotificationScheduler: ObservableObject {
     func cancelSenderNotifications(for pingId: UUID) {
         let identifiers = [
             "\(NotificationPrefix.scheduledTime)\(pingId.uuidString)",
-            "\(NotificationPrefix.deadlineWarning)\(pingId.uuidString)",
-            "\(NotificationPrefix.deadlineFinal)\(pingId.uuidString)",
-            "\(NotificationPrefix.missedPing)\(pingId.uuidString)"
+            "\(NotificationPrefix.missedPing)\(pingId.uuidString)",
+            "\(NotificationPrefix.receiverMissed)\(pingId.uuidString)",
+            "\(NotificationPrefix.receiverMissedFollowup)\(pingId.uuidString)"
         ]
 
         notificationCenter.removePendingNotificationRequests(withIdentifiers: identifiers)
@@ -392,9 +279,9 @@ final class PingNotificationScheduler: ObservableObject {
             let requests = await notificationCenter.pendingNotificationRequests()
             let pingNotificationIds = requests.filter { request in
                 request.identifier.hasPrefix(NotificationPrefix.scheduledTime) ||
-                request.identifier.hasPrefix(NotificationPrefix.deadlineWarning) ||
-                request.identifier.hasPrefix(NotificationPrefix.deadlineFinal) ||
-                request.identifier.hasPrefix(NotificationPrefix.missedPing)
+                request.identifier.hasPrefix(NotificationPrefix.missedPing) ||
+                request.identifier.hasPrefix(NotificationPrefix.receiverMissed) ||
+                request.identifier.hasPrefix(NotificationPrefix.receiverMissedFollowup)
             }.map { $0.identifier }
 
             notificationCenter.removePendingNotificationRequests(withIdentifiers: pingNotificationIds)
@@ -465,8 +352,8 @@ final class PingNotificationScheduler: ObservableObject {
         Logger.info("Created late completion notification for receiver: \(receiverId)")
     }
 
-    /// Create notification record for receiver when ping is missed
-    /// "[Sender Name] missed their ping. Last seen [time]."
+    /// Create notification record for receiver when ping is missed (immediate, at scheduled time)
+    /// "[Sender Name] hasn't sent their Pruuf yet."
     /// - Parameters:
     ///   - senderName: The name of the sender
     ///   - receiverId: The receiver's user ID
@@ -480,18 +367,11 @@ final class PingNotificationScheduler: ObservableObject {
         connectionId: UUID,
         lastSeen: Date?
     ) async throws {
-        var body = "\(senderName) missed their Pruuf."
-        if let lastSeen = lastSeen {
-            let timeFormatter = DateFormatter()
-            timeFormatter.timeStyle = .short
-            body += " Last seen \(timeFormatter.string(from: lastSeen))."
-        }
-
         let notification = PruufNotificationInsert(
             userId: receiverId,
             type: .missedPing,
             title: "Missed Check-in Alert",
-            body: body,
+            body: "\(senderName) hasn't sent their Pruuf yet.",
             metadata: NotificationMetadata(
                 pingId: pingId,
                 connectionId: connectionId
@@ -500,6 +380,34 @@ final class PingNotificationScheduler: ObservableObject {
 
         try await insertNotificationRecord(notification)
         Logger.info("Created missed ping notification for receiver: \(receiverId)")
+    }
+
+    /// Create second notification record for receiver 60 minutes after scheduled time
+    /// "[Sender Name] still hasn't sent their Pruuf. It's been 60 minutes past their check-in time."
+    /// - Parameters:
+    ///   - senderName: The name of the sender
+    ///   - receiverId: The receiver's user ID
+    ///   - pingId: The missed ping's ID
+    ///   - connectionId: The connection ID
+    func notifyReceiverPingMissedFollowup(
+        senderName: String,
+        receiverId: UUID,
+        pingId: UUID,
+        connectionId: UUID
+    ) async throws {
+        let notification = PruufNotificationInsert(
+            userId: receiverId,
+            type: .missedPing,
+            title: "Missed Check-in Alert",
+            body: "\(senderName) still hasn't sent their Pruuf. It's been 60 minutes past their check-in time.",
+            metadata: NotificationMetadata(
+                pingId: pingId,
+                connectionId: connectionId
+            )
+        )
+
+        try await insertNotificationRecord(notification)
+        Logger.info("Created 60-minute followup missed ping notification for receiver: \(receiverId)")
     }
 
     /// Create notification record for receiver when sender starts a break
@@ -556,7 +464,7 @@ final class PingNotificationScheduler: ObservableObject {
     ///   - userInfo: Additional data from the notification
     func handleNotificationAction(_ actionIdentifier: String, userInfo: [AnyHashable: Any]) async {
         switch actionIdentifier {
-        case "CONFIRM_PING", "URGENT_CONFIRM_PING", "FINAL_CONFIRM_PING":
+        case "CONFIRM_PING":
             await handleConfirmPingAction(userInfo: userInfo)
         case "SNOOZE_PING":
             await handleSnoozePingAction(userInfo: userInfo)
@@ -668,9 +576,9 @@ final class PingNotificationScheduler: ObservableObject {
             notificationCenter.getPendingNotificationRequests { requests in
                 let count = requests.filter { request in
                     request.identifier.hasPrefix(NotificationPrefix.scheduledTime) ||
-                    request.identifier.hasPrefix(NotificationPrefix.deadlineWarning) ||
-                    request.identifier.hasPrefix(NotificationPrefix.deadlineFinal) ||
-                    request.identifier.hasPrefix(NotificationPrefix.missedPing)
+                    request.identifier.hasPrefix(NotificationPrefix.missedPing) ||
+                    request.identifier.hasPrefix(NotificationPrefix.receiverMissed) ||
+                    request.identifier.hasPrefix(NotificationPrefix.receiverMissedFollowup)
                 }.count
                 continuation.resume(returning: count)
             }

@@ -8,8 +8,9 @@ import UIKit
 enum ReceiverOnboardingViews {
     // Contains:
     // - ReceiverTutorialView
-    // - UniqueCodeView
-    // - SenderCodeEntryView
+    // - UniqueCodeView (legacy, still available)
+    // - SenderCodeEntryView (legacy, still available)
+    // - ConnectToSenderFlowView (combined flow for onboarding)
     // - SubscriptionInfoView
     // - ReceiverNotificationPermissionView
     // - ReceiverOnboardingCompleteView
@@ -21,18 +22,17 @@ enum ReceiverOnboardingViews {
 /// Steps in the receiver onboarding flow
 enum ReceiverOnboardingFlowStep: Int, CaseIterable {
     case tutorial = 0
-    case uniqueCode = 1
-    case senderCodeEntry = 2
-    case subscriptionInfo = 3
-    case notifications = 4
-    case complete = 5
+    case connectToSender = 1
+    case subscriptionInfo = 2
+    case notifications = 3
+    case complete = 4
 
     /// Map to OnboardingStep enum
     var onboardingStep: OnboardingStep {
         switch self {
         case .tutorial:
             return .receiverTutorial
-        case .uniqueCode, .senderCodeEntry:
+        case .connectToSender:
             return .receiverCode
         case .subscriptionInfo:
             return .receiverSubscription
@@ -69,7 +69,7 @@ extension TutorialSlide {
         TutorialSlide(
             iconName: "number.circle.fill",
             title: "Connect using their unique code",
-            description: "Enter your sender's 6-digit code to connect, or share your code so they can find you.",
+            description: "Enter your sender's 5-digit code to connect, or share your code so they can find you.",
             iconColor: .blue
         )
     ]
@@ -170,7 +170,7 @@ struct ReceiverTutorialView: View {
 
 // MARK: - Unique Code View
 
-/// Displays the receiver's unique 6-digit code with copy/share functionality (Step 2)
+/// Displays the receiver's unique 5-digit code with copy/share functionality (Step 2)
 struct UniqueCodeView: View {
     @EnvironmentObject private var authService: AuthService
     @StateObject private var viewModel = UniqueCodeViewModel()
@@ -390,7 +390,7 @@ class UniqueCodeViewModel: ObservableObject {
 
         do {
             // Call the create_receiver_code() database function via RPC
-            // This function either returns existing code or generates a new unique 6-digit code
+            // This function either returns existing code or generates a new unique 5-digit code
             let code: String = try await supabaseClient
                 .rpc("create_receiver_code", params: ["p_user_id": userId.uuidString])
                 .execute()
@@ -428,7 +428,7 @@ struct SenderCodeEntryView: View {
     /// Callback when user taps back button
     var onBack: (() -> Void)?
 
-    private let codeLength = 6
+    private let codeLength = 5
     private let database = SupabaseConfig.client.schema("public")
 
     var body: some View {
@@ -476,7 +476,7 @@ struct SenderCodeEntryView: View {
                             senderCode = filtered
                         }
 
-                        // Auto-validate when 6 digits entered
+                        // Auto-validate when 5 digits entered
                         if senderCode.count == codeLength {
                             Task {
                                 await validateCode()
@@ -516,7 +516,7 @@ struct SenderCodeEntryView: View {
                         .font(.subheadline.bold())
                 }
 
-                Text("No worries! You can add senders later from the Receivers tab. Just ask them for their 6-digit code when you're ready.")
+                Text("No worries! You can add senders later from the Receivers tab. Just ask them for their 5-digit code when you're ready.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -733,9 +733,547 @@ struct SenderCodeDigitBox: View {
     }
 }
 
+// MARK: - Connect To Sender Flow View
+
+/// Combined view for connecting receiver to sender during onboarding
+/// Presents two paths:
+/// - "I have a code" → Enter sender's 5-digit code to connect
+/// - "I'm setting up first" → Generate receiver's code to share with sender
+struct ConnectToSenderFlowView: View {
+    @EnvironmentObject private var authService: AuthService
+    @StateObject private var codeViewModel = UniqueCodeViewModel()
+
+    @State private var flowPhase: ConnectFlowPhase = .question
+    @State private var senderCode: String = ""
+    @State private var isValidating: Bool = false
+    @State private var errorMessage: String?
+    @State private var connectionSuccess: Bool = false
+    @State private var connectedSenderName: String?
+    @State private var showCopiedAlert: Bool = false
+    @FocusState private var isCodeFieldFocused: Bool
+
+    private let codeLength = 5
+    private let database = SupabaseConfig.client.schema("public")
+
+    /// Callback when flow completes (receiver code, whether connection was made)
+    var onContinue: (String, Bool) -> Void
+
+    /// Callback when user taps back
+    var onBack: (() -> Void)?
+
+    enum ConnectFlowPhase {
+        case question       // "Has your sender given you a code?"
+        case enterCode      // Enter sender's 5-digit code
+        case setupFirst     // Generate and show receiver's code
+    }
+
+    var body: some View {
+        Group {
+            switch flowPhase {
+            case .question:
+                questionView
+            case .enterCode:
+                enterCodeView
+            case .setupFirst:
+                setupFirstView
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if let onBack = onBack {
+                    OnboardingBackButton(action: {
+                        if flowPhase == .question {
+                            onBack()
+                        } else {
+                            withAnimation { flowPhase = .question }
+                        }
+                    }, tintColor: .pink)
+                }
+            }
+        }
+    }
+
+    // MARK: - Question View
+
+    private var questionView: some View {
+        VStack(spacing: 24) {
+            VStack(spacing: 12) {
+                Image(systemName: "link.circle.fill")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.pink)
+
+                Text("Connect with a Sender")
+                    .font(.title.bold())
+                    .multilineTextAlignment(.center)
+
+                Text("How would you like to get started?")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, 40)
+            .padding(.horizontal, 20)
+
+            Spacer()
+
+            VStack(spacing: 16) {
+                // Option 1: I have a code
+                Button {
+                    withAnimation { flowPhase = .enterCode }
+                } label: {
+                    HStack(spacing: 16) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.green.opacity(0.15))
+                                .frame(width: 48, height: 48)
+                            Image(systemName: "number.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundStyle(.green)
+                        }
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("I have a code")
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                            Text("My sender gave me their 5-digit code")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.systemBackground))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color(.systemGray4), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Option 2: I'm setting up first
+                Button {
+                    withAnimation { flowPhase = .setupFirst }
+                    Task {
+                        await codeViewModel.generateCode(for: authService.currentUser?.id)
+                    }
+                } label: {
+                    HStack(spacing: 16) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.pink.opacity(0.15))
+                                .frame(width: 48, height: 48)
+                            Image(systemName: "person.crop.circle.badge.plus")
+                                .font(.system(size: 24))
+                                .foregroundStyle(.pink)
+                        }
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("I'm setting up first")
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                            Text("Get my code to share with my sender")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.systemBackground))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color(.systemGray4), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 20)
+
+            Spacer()
+
+            // Skip option
+            Button {
+                // Generate code in background then continue
+                Task {
+                    await codeViewModel.generateCode(for: authService.currentUser?.id)
+                    onContinue(codeViewModel.uniqueCode ?? "", false)
+                }
+            } label: {
+                Text("Skip for Now")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.bottom, 40)
+        }
+    }
+
+    // MARK: - Enter Code View
+
+    private var enterCodeView: some View {
+        VStack(spacing: 24) {
+            VStack(spacing: 12) {
+                Text("Enter sender's code")
+                    .font(.title2.bold())
+                    .multilineTextAlignment(.center)
+
+                Text("Enter the 5-digit code your sender shared with you")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, 40)
+            .padding(.horizontal, 20)
+
+            Spacer()
+
+            VStack(spacing: 20) {
+                // Code input boxes
+                HStack(spacing: 12) {
+                    ForEach(0..<codeLength, id: \.self) { index in
+                        SenderCodeDigitBox(
+                            digit: getDigit(at: index),
+                            isActive: index == senderCode.count && isCodeFieldFocused
+                        )
+                    }
+                }
+                .onTapGesture {
+                    isCodeFieldFocused = true
+                }
+
+                // Hidden text field
+                TextField("", text: $senderCode)
+                    .keyboardType(.numberPad)
+                    .focused($isCodeFieldFocused)
+                    .opacity(0)
+                    .frame(height: 0)
+                    .onChange(of: senderCode) { newValue in
+                        let filtered = String(newValue.filter { $0.isNumber }.prefix(codeLength))
+                        if filtered != newValue {
+                            senderCode = filtered
+                        }
+                        if senderCode.count == codeLength {
+                            Task { await validateSenderCode() }
+                        }
+                    }
+
+                if let error = errorMessage {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                }
+
+                if connectionSuccess {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                        Text("Connected to \(connectedSenderName ?? "Sender")!")
+                            .font(.subheadline)
+                            .foregroundStyle(.green)
+                    }
+                }
+            }
+            .padding(.horizontal, 20)
+
+            Spacer()
+
+            VStack(spacing: 12) {
+                Button {
+                    if connectionSuccess || senderCode.isEmpty {
+                        // Generate receiver code then continue
+                        Task {
+                            await codeViewModel.generateCode(for: authService.currentUser?.id)
+                            onContinue(codeViewModel.uniqueCode ?? "", connectionSuccess)
+                        }
+                    } else {
+                        Task { await validateSenderCode() }
+                    }
+                } label: {
+                    HStack {
+                        if isValidating {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .tint(.white)
+                        } else {
+                            Text(connectionSuccess ? "Continue" : (senderCode.count == codeLength ? "Connect" : "Continue"))
+                                .fontWeight(.semibold)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(Color.pink)
+                    .foregroundStyle(.white)
+                    .cornerRadius(12)
+                }
+                .disabled(isValidating)
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 40)
+        }
+        .onAppear {
+            isCodeFieldFocused = true
+        }
+    }
+
+    // MARK: - Setup First View
+
+    private var setupFirstView: some View {
+        VStack(spacing: 24) {
+            VStack(spacing: 12) {
+                Text("Your PRUUF Code")
+                    .font(.title.bold())
+                    .multilineTextAlignment(.center)
+
+                Text("Share this code with your sender so they can connect with you")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, 40)
+            .padding(.horizontal, 20)
+
+            Spacer()
+
+            if codeViewModel.isLoading {
+                ProgressView()
+                    .scaleEffect(1.5)
+            } else if let code = codeViewModel.uniqueCode {
+                VStack(spacing: 20) {
+                    HStack(spacing: 12) {
+                        ForEach(Array(code.enumerated()), id: \.offset) { _, digit in
+                            Text(String(digit))
+                                .font(.system(size: 40, weight: .bold, design: .monospaced))
+                                .frame(width: 48, height: 56)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color(.systemGray6))
+                                )
+                        }
+                    }
+
+                    HStack(spacing: 16) {
+                        Button {
+                            UIPasteboard.general.string = code
+                            showCopiedAlert = true
+                            let generator = UINotificationFeedbackGenerator()
+                            generator.notificationOccurred(.success)
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "doc.on.doc")
+                                Text("Copy")
+                            }
+                            .font(.subheadline.bold())
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .background(Capsule().fill(Color.blue.opacity(0.15)))
+                            .foregroundStyle(.blue)
+                        }
+
+                        Button {
+                            let shareText = "I'd like you to send me daily Pruufs. Download PRUUF and enter my code \(code) to connect: https://pruuf.app/join"
+                            let activityController = UIActivityViewController(
+                                activityItems: [shareText],
+                                applicationActivities: nil
+                            )
+                            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                               let rootViewController = windowScene.windows.first?.rootViewController {
+                                rootViewController.present(activityController, animated: true)
+                            }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "square.and.arrow.up")
+                                Text("Share")
+                            }
+                            .font(.subheadline.bold())
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .background(Capsule().fill(Color.pink.opacity(0.15)))
+                            .foregroundStyle(.pink)
+                        }
+                    }
+                }
+            } else if let error = codeViewModel.errorMessage {
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 50))
+                        .foregroundStyle(.orange)
+                    Text(error)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Button("Retry") {
+                        Task {
+                            await codeViewModel.generateCode(for: authService.currentUser?.id)
+                        }
+                    }
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.blue)
+                }
+                .padding(.horizontal, 40)
+            }
+
+            Spacer()
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    Image(systemName: "info.circle.fill")
+                        .foregroundStyle(.blue)
+                    Text("What happens next?")
+                        .font(.subheadline.bold())
+                }
+                Text("When your sender enters this code, you'll automatically be connected and start receiving their daily Pruufs.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGray6))
+            )
+            .padding(.horizontal, 20)
+
+            Spacer()
+
+            Button {
+                onContinue(codeViewModel.uniqueCode ?? "", false)
+            } label: {
+                Text("Continue")
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(codeViewModel.uniqueCode != nil ? Color.pink : Color.gray)
+                    .foregroundStyle(.white)
+                    .cornerRadius(12)
+            }
+            .disabled(codeViewModel.uniqueCode == nil)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 40)
+        }
+        .alert("Copied!", isPresented: $showCopiedAlert) {
+            Button("OK", role: .cancel) {}
+        }
+    }
+
+    // MARK: - Private Methods
+
+    private func getDigit(at index: Int) -> String {
+        guard index < senderCode.count else { return "" }
+        let stringIndex = senderCode.index(senderCode.startIndex, offsetBy: index)
+        return String(senderCode[stringIndex])
+    }
+
+    private func validateSenderCode() async {
+        guard senderCode.count == codeLength else { return }
+        guard let receiverId = authService.currentUser?.id else {
+            errorMessage = "User session not found"
+            return
+        }
+
+        isValidating = true
+        errorMessage = nil
+
+        do {
+            struct SenderProfileLookup: Codable {
+                let userId: UUID
+                let displayName: String?
+                enum CodingKeys: String, CodingKey {
+                    case userId = "user_id"
+                    case displayName = "display_name"
+                }
+            }
+
+            let senderProfiles: [SenderProfileLookup] = try await database
+                .from("sender_profiles")
+                .select("user_id, display_name")
+                .eq("invitation_code", value: senderCode)
+                .eq("is_active", value: true)
+                .execute()
+                .value
+
+            guard let senderProfile = senderProfiles.first else {
+                errorMessage = "Invalid code. Please check and try again."
+                isValidating = false
+                return
+            }
+
+            let senderId = senderProfile.userId
+            connectedSenderName = senderProfile.displayName ?? "Sender"
+
+            struct ConnectionCheck: Codable { let id: UUID }
+            let existing: [ConnectionCheck] = try await database
+                .from("connections")
+                .select("id")
+                .eq("sender_id", value: senderId.uuidString)
+                .eq("receiver_id", value: receiverId.uuidString)
+                .neq("status", value: "deleted")
+                .execute()
+                .value
+
+            if !existing.isEmpty {
+                errorMessage = "You're already connected to this sender."
+                isValidating = false
+                return
+            }
+
+            struct NewConnection: Codable {
+                let senderId: UUID
+                let receiverId: UUID
+                let status: String
+                let connectionCode: String
+                enum CodingKeys: String, CodingKey {
+                    case senderId = "sender_id"
+                    case receiverId = "receiver_id"
+                    case status
+                    case connectionCode = "connection_code"
+                }
+            }
+
+            try await database
+                .from("connections")
+                .insert(NewConnection(
+                    senderId: senderId,
+                    receiverId: receiverId,
+                    status: "active",
+                    connectionCode: senderCode
+                ))
+                .execute()
+
+            connectionSuccess = true
+            isValidating = false
+
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.success)
+
+            // Generate receiver's code in background
+            await codeViewModel.generateCode(for: authService.currentUser?.id)
+
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            onContinue(codeViewModel.uniqueCode ?? "", true)
+
+        } catch {
+            print("Connection error: \(error)")
+            errorMessage = "Failed to connect. Please try again."
+            isValidating = false
+        }
+    }
+}
+
 // MARK: - Subscription Info View
 
-/// Explains the subscription model (Step 4)
+/// Explains the subscription model (Step 3)
 struct SubscriptionInfoView: View {
     /// Callback when user continues
     var onContinue: () -> Void
@@ -747,7 +1285,7 @@ struct SubscriptionInfoView: View {
     private let trialDays = 15
 
     /// Monthly price
-    private let monthlyPrice = "$2.99"
+    private let monthlyPrice = "$4.99"
 
     var body: some View {
         VStack(spacing: 24) {
@@ -764,7 +1302,7 @@ struct SubscriptionInfoView: View {
                     .foregroundStyle(.pink)
             }
 
-            // Title (as per plan: "15 Days Free, Then $2.99/Month")
+            // Title (as per plan: "15 Days Free, Then $4.99/Month")
             VStack(spacing: 8) {
                 Text("15 Days Free, Then \(monthlyPrice)/Month")
                     .font(.title2.bold())
@@ -1113,7 +1651,7 @@ struct ReceiverOnboardingCompleteView: View {
 
             // Setup Summary (as per plan)
             VStack(spacing: 16) {
-                // Your code: [6-digit code]
+                // Your code: [5-digit code]
                 ReceiverSummaryRow(
                     icon: "number.circle.fill",
                     iconColor: .blue,
@@ -1226,28 +1764,17 @@ struct ReceiverOnboardingCoordinatorView: View {
             switch currentStep {
             case .tutorial:
                 ReceiverTutorialView(
-                    onComplete: { moveToStep(.uniqueCode) },
-                    onSkip: { moveToStep(.uniqueCode) }
+                    onComplete: { moveToStep(.connectToSender) },
+                    onSkip: { moveToStep(.connectToSender) }
                 )
 
-            case .uniqueCode:
-                UniqueCodeView(
-                    onContinue: { code in
+            case .connectToSender:
+                ConnectToSenderFlowView(
+                    onContinue: { code, connected in
                         uniqueCode = code
-                        moveToStep(.senderCodeEntry)
-                    },
-                    onBack: { moveToPreviousStep() }
-                )
-
-            case .senderCodeEntry:
-                SenderCodeEntryView(
-                    onContinue: { connected in
                         if connected {
                             connectionCount += 1
                         }
-                        moveToStep(.subscriptionInfo)
-                    },
-                    onSkip: {
                         moveToStep(.subscriptionInfo)
                     },
                     onBack: { moveToPreviousStep() }
@@ -1300,7 +1827,7 @@ struct ReceiverOnboardingCoordinatorView: View {
         case .receiverTutorial:
             currentStep = .tutorial
         case .receiverCode:
-            currentStep = .uniqueCode
+            currentStep = .connectToSender
         case .receiverSubscription:
             currentStep = .subscriptionInfo
         case .receiverNotifications:
@@ -1331,12 +1858,10 @@ struct ReceiverOnboardingCoordinatorView: View {
             case .tutorial:
                 // Can't go back from tutorial
                 break
-            case .uniqueCode:
+            case .connectToSender:
                 currentStep = .tutorial
-            case .senderCodeEntry:
-                currentStep = .uniqueCode
             case .subscriptionInfo:
-                currentStep = .senderCodeEntry
+                currentStep = .connectToSender
             case .notifications:
                 currentStep = .subscriptionInfo
             case .complete:
@@ -1387,9 +1912,9 @@ struct ReceiverTutorialView_Previews: PreviewProvider {
     }
 }
 
-struct UniqueCodeView_Previews: PreviewProvider {
+struct ConnectToSenderFlowView_Previews: PreviewProvider {
     static var previews: some View {
-        UniqueCodeView(onContinue: { _ in })
+        ConnectToSenderFlowView(onContinue: { _, _ in })
     }
 }
 
@@ -1402,7 +1927,7 @@ struct SubscriptionInfoView_Previews: PreviewProvider {
 struct ReceiverOnboardingCompleteView_Previews: PreviewProvider {
     static var previews: some View {
         ReceiverOnboardingCompleteView(
-            uniqueCode: "123456",
+            uniqueCode: "12345",
             connectionCount: 1,
             notificationsEnabled: true,
             trialEndDate: Calendar.current.date(byAdding: .day, value: 15, to: Date()) ?? Date(),

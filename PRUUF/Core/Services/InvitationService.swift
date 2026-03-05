@@ -23,7 +23,7 @@ final class InvitationService: ObservableObject {
     // MARK: - Constants
 
     /// Length of invitation codes
-    private static let codeLength = 6
+    private static let codeLength = 5
 
     /// Invitation code expiration in days
     private static let codeExpirationDays = 7
@@ -36,8 +36,8 @@ final class InvitationService: ObservableObject {
 
     // MARK: - Generate Invitation Code
 
-    /// Generate a unique 6-digit invitation code
-    /// - Returns: A unique 6-digit code
+    /// Generate a unique 5-digit invitation code
+    /// - Returns: A unique 5-digit code
     func generateInvitationCode() -> String {
         let digits = "0123456789"
         return String((0..<Self.codeLength).map { _ in digits.randomElement()! })
@@ -126,7 +126,7 @@ final class InvitationService: ObservableObject {
     // MARK: - Validate Invitation Code
 
     /// Validate an invitation code and return the invitation if valid
-    /// - Parameter code: The 6-digit invitation code
+    /// - Parameter code: The 5-digit invitation code
     /// - Returns: The invitation if valid and not expired
     func validateInvitationCode(_ code: String) async throws -> ConnectionInvitation {
         isLoading = true

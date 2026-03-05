@@ -84,11 +84,12 @@ struct LoadingView: View {
 struct PhoneNumberEntryView: View {
     @EnvironmentObject private var authService: AuthService
     @EnvironmentObject private var notificationService: NotificationService
+    @State private var displayName: String = ""
     @State private var phoneNumber: String = ""
     @State private var countryCode: String = "+1"
     @State private var showVerificationView: Bool = false
     @State private var errorMessage: String?
-    @State private var isValidPhoneNumber: Bool = false
+    @State private var isFormValid: Bool = false
     @State private var showPermissionAlert: Bool = false
 
     /// Combined full phone number with country code
@@ -118,15 +119,27 @@ struct PhoneNumberEntryView: View {
 
             Spacer()
 
-            // Phone number input section
+            // Name and phone number input section
             VStack(spacing: 20) {
-                Text("Enter your phone number")
+                Text("Let's get started")
                     .font(.headline)
 
-                Text("We'll send you a verification code via notification")
+                Text("Enter your name and phone number to set up your account")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
+
+                // Name field
+                TextField("Your Name", text: $displayName)
+                    .textContentType(.name)
+                    .autocapitalization(.words)
+                    .font(.title3)
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(12)
+                    .onChange(of: displayName) { _ in
+                        validateForm()
+                    }
 
                 HStack(spacing: 12) {
                     // Country code picker
@@ -140,8 +153,8 @@ struct PhoneNumberEntryView: View {
                         .padding()
                         .background(Color(.systemGray6))
                         .cornerRadius(12)
-                        .onChange(of: phoneNumber) { newValue in
-                            validatePhoneNumber(newValue)
+                        .onChange(of: phoneNumber) { _ in
+                            validateForm()
                         }
                 }
 
@@ -175,11 +188,11 @@ struct PhoneNumberEntryView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .background(isValidPhoneNumber ? Color.blue : Color.gray)
+                .background(isFormValid ? Color.blue : Color.gray)
                 .foregroundStyle(.white)
                 .cornerRadius(12)
             }
-            .disabled(!isValidPhoneNumber || authService.isLoading)
+            .disabled(!isFormValid || authService.isLoading)
             .padding(.horizontal)
             .padding(.bottom, 32)
 
@@ -206,14 +219,18 @@ struct PhoneNumberEntryView: View {
 
     // MARK: - Private Methods
 
-    private func validatePhoneNumber(_ number: String) {
-        let digitsOnly = number.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
-        // Basic validation: at least 10 digits for US numbers
-        isValidPhoneNumber = digitsOnly.count >= 10
+    private func validateForm() {
+        let digitsOnly = phoneNumber.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+        let nameValid = !displayName.trimmingCharacters(in: .whitespaces).isEmpty
+        let phoneValid = digitsOnly.count >= 10
+        isFormValid = nameValid && phoneValid
     }
 
     private func startVerification() async {
         errorMessage = nil
+
+        // Store display name on auth service for use after verification completes
+        authService.pendingDisplayName = displayName.trimmingCharacters(in: .whitespaces)
 
         // Get device token or use placeholder for DEBUG testing
         var deviceToken = notificationService.deviceToken

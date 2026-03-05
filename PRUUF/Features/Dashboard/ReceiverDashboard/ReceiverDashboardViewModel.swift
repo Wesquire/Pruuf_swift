@@ -12,7 +12,7 @@ final class ReceiverDashboardViewModel: ObservableObject {
     /// List of senders (connections where user is receiver)
     @Published private(set) var senders: [SenderWithPingStatus] = []
 
-    /// Receiver's unique 6-digit code
+    /// Receiver's unique 5-digit code
     @Published private(set) var uniqueCode: String = ""
 
     /// Receiver's subscription profile
@@ -312,13 +312,11 @@ final class ReceiverDashboardViewModel: ObservableObject {
                 components.minute = minute
 
                 if let pingTime = calendar.date(from: components) {
-                    // Add 60-minute grace period
-                    let deadline = calendar.date(byAdding: .minute, value: 60, to: pingTime) ?? pingTime
-
-                    if Date() > deadline {
+                    // Deadline = scheduled time (no grace period)
+                    if Date() > pingTime {
                         return .missed(lastSeen: pingTime)
                     } else {
-                        return .expected(by: deadline)
+                        return .expected(by: pingTime)
                     }
                 }
             }
